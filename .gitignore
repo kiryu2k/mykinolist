@@ -22,3 +22,6 @@ go.work
 
 # Directory for executables
 bin/
+
+# env vars
+.env
