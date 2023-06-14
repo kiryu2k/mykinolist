@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 	"regexp"
+	"unicode"
 )
 
 type User struct {
@@ -14,13 +15,11 @@ type User struct {
 const (
 	validUsername = `^[\w]{6,50}$`
 	validEmail    = `^[\w-\.]{6,30}@([\w-]{1,10}\.)[\w-]{2,4}$`
-	// validPassword = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,30}$` TODO PASSWORD VALID REGEX
 )
 
 func (u *User) Validate() error {
 	fmt.Println(*u)
 	isMatched, err := regexp.MatchString(validUsername, u.Username)
-	fmt.Println(isMatched, err)
 	if err != nil {
 		return err
 	}
@@ -34,12 +33,28 @@ func (u *User) Validate() error {
 	if !isMatched {
 		return fmt.Errorf("email must consist of letters and numbers, also it mustn't exceed 50 characters")
 	}
-	// isMatched, err = regexp.MatchString(validPassword, u.Password)
-	// if err != nil {
-	// 	return err
-	// }
-	// if !isMatched {
-	// 	return fmt.Errorf("password must contain from 8 to 30 characters, be at least one uppercase letter, one lowercase letter, one number and one special character")
-	// }
-	return nil
+	return u.validatePassword()
+}
+
+func (u *User) validatePassword() error {
+	var (
+		hasDigit      bool
+		hasLowerAlpha bool
+		hasUpperAlpha bool
+	)
+	for _, sym := range u.Password {
+		switch {
+		case unicode.IsDigit(sym):
+			hasDigit = true
+		case unicode.IsLower(sym):
+			hasLowerAlpha = true
+		case unicode.IsUpper(sym):
+			hasUpperAlpha = true
+		}
+	}
+	length := len(u.Password)
+	if hasDigit && hasLowerAlpha && hasUpperAlpha && length >= 8 && length <= 30 {
+		return nil
+	}
+	return fmt.Errorf("password must contain from 8 to 30 characters, be at least one uppercase letter, one lowercase letter and one number")
 }
