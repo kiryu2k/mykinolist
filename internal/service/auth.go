@@ -12,8 +12,9 @@ type authService struct {
 }
 
 type AuthRepository interface {
-	CreateAccount(user *model.User) error
-	LoginAccount(user *model.User) error
+	CreateAccount(*model.User) error
+	FindUserByName(string) (*model.User, error)
+	UpdateLastLogin(*model.User) error
 }
 
 func (s *authService) SignUp(user *model.User) error {
@@ -31,4 +32,20 @@ func (s *authService) SignUp(user *model.User) error {
 		return err
 	}
 	return nil
+}
+
+func (s *authService) SignIn(user *model.User) error {
+	userFromDB, err := s.repo.FindUserByName(user.Username)
+	if err != nil {
+		return err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(userFromDB.Password), []byte(user.Password))
+	if err != nil {
+		return err
+	}
+	user.ID = userFromDB.ID
+	user.Password = userFromDB.Password
+	user.CreatedOn = userFromDB.CreatedOn
+	user.LastLogin = time.Now()
+	return s.repo.UpdateLastLogin(user)
 }

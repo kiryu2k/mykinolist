@@ -30,6 +30,34 @@ VALUES ($1, $2, $3, $4, $5) RETURNING id;
 	return nil
 }
 
-func (r *userRepository) LoginAccount(user *model.User) error {
-	return nil
+func (r *userRepository) FindUserByName(username string) (*model.User, error) {
+	query := `
+SELECT * FROM users
+WHERE username = $1;
+	`
+	rows, err := r.db.Query(query, username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		return scanUser(rows)
+	}
+	return nil, err
+}
+
+func (r *userRepository) UpdateLastLogin(user *model.User) error {
+	query := `
+UPDATE users
+SET last_login = $1
+WHERE id = $2
+	`
+	_, err := r.db.Query(query, user.LastLogin, user.ID)
+	return err
+}
+
+func scanUser(rows *sql.Rows) (*model.User, error) {
+	u := new(model.User)
+	err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.Password, &u.CreatedOn, &u.LastLogin)
+	return u, err
 }

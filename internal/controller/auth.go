@@ -29,7 +29,8 @@ func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 	req := new(signUpRequest)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusInternalServerError, resp)
+		writeJSONResponse(w, http.StatusBadRequest, resp)
+		return
 	}
 	defer r.Body.Close()
 	user := &model.User{
@@ -46,5 +47,22 @@ func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
-
+	req := new(signUpRequest)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		resp := &errorResponse{err.Error()}
+		writeJSONResponse(w, http.StatusBadRequest, resp)
+		return
+	}
+	defer r.Body.Close()
+	user := &model.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: req.Password,
+	}
+	if err := h.service.SignIn(user); err != nil {
+		resp := &errorResponse{err.Error()}
+		writeJSONResponse(w, http.StatusInternalServerError, resp)
+		return
+	}
+	writeJSONResponse(w, http.StatusOK, user)
 }
