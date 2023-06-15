@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kiryu-dev/mykinolist/internal/model"
 	"github.com/kiryu-dev/mykinolist/internal/service"
-	"github.com/sirupsen/logrus"
 )
 
 type authHandler struct {
@@ -29,7 +28,8 @@ type signUpRequest struct {
 func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 	req := new(signUpRequest)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		logrus.Fatal(err.Error())
+		resp := &errorResponse{err.Error()}
+		writeJSONResponse(w, http.StatusInternalServerError, resp)
 	}
 	defer r.Body.Close()
 	user := &model.User{
@@ -38,11 +38,11 @@ func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 		Password: req.Password,
 	}
 	if err := h.service.SignUp(user); err != nil {
-		logrus.Fatal(err.Error())
+		resp := &errorResponse{err.Error()}
+		writeJSONResponse(w, http.StatusInternalServerError, resp)
+		return
 	}
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	writeJSONResponse(w, http.StatusOK, user)
 }
 
 func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
