@@ -3,22 +3,25 @@ package model
 import (
 	"fmt"
 	"regexp"
+	"time"
 	"unicode"
 )
 
 type User struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	ID        int       `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	CreatedOn time.Time `json:"created_on"`
+	LastLogin time.Time `json:"last_login"`
 }
 
 const (
 	validUsername = `^[\w]{6,50}$`
-	validEmail    = `^[\w-\.]{6,30}@([\w-]{1,10}\.)[\w-]{2,4}$`
+	validEmail    = `^[\w-\.]{6,54}@([\w-]{1,40}\.)[\w-]{2,4}$`
 )
 
 func (u *User) Validate() error {
-	fmt.Println(*u)
 	isMatched, err := regexp.MatchString(validUsername, u.Username)
 	if err != nil {
 		return err
@@ -31,7 +34,7 @@ func (u *User) Validate() error {
 		return err
 	}
 	if !isMatched {
-		return fmt.Errorf("email must consist of letters and numbers, also it mustn't exceed 50 characters")
+		return fmt.Errorf("email must consist of letters and numbers, also it mustn't exceed 100 characters")
 	}
 	return u.validatePassword()
 }

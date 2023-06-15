@@ -20,12 +20,23 @@ func InitAuthRoutes(router *mux.Router, s service.AuthService) {
 	router.HandleFunc("/auth/signin", handler.signIn).Methods(http.MethodGet)
 }
 
+type signUpRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
-	user := new(model.User)
-	if err := json.NewDecoder(r.Body).Decode(user); err != nil {
+	req := new(signUpRequest)
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		logrus.Fatal(err.Error())
 	}
 	defer r.Body.Close()
+	user := &model.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: req.Password,
+	}
 	if err := h.service.SignUp(user); err != nil {
 		logrus.Fatal(err.Error())
 	}
