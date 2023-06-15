@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  postgres:
+    restart: always
+    image: postgres
+    environment:
+      POSTGRES_DB: "mykinolist"
+      POSTGRES_USER: "kirrryu"
+      POSTGRES_PASSWORD: "qwerty"
+    volumes:
+      - ./.database/postgres/data:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"

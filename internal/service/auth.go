@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kiryu-dev/mykinolist/internal/model"
@@ -38,6 +39,9 @@ func (s *authService) SignIn(user *model.User) error {
 	userFromDB, err := s.repo.FindUserByName(user.Username)
 	if err != nil {
 		return err
+	}
+	if userFromDB == nil {
+		return fmt.Errorf("user with name %s doesn't exist", user.Username)
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(userFromDB.Password), []byte(user.Password))
 	if err != nil {
