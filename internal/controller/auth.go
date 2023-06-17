@@ -2,7 +2,9 @@ package controller
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/kiryu-dev/mykinolist/internal/model"
@@ -19,47 +21,35 @@ func InitAuthRoutes(router *mux.Router, s service.AuthService) {
 	router.HandleFunc("/auth/signin", handler.signIn).Methods(http.MethodGet)
 }
 
-type signUpRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
-	req := new(signUpRequest)
+	startTime := time.Now()
+	req := new(model.SignUpUserDTO)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		resp := &errorResponse{err.Error()}
 		writeJSONResponse(w, http.StatusBadRequest, resp)
 		return
 	}
 	defer r.Body.Close()
-	user := &model.User{
-		Username: req.Username,
-		Email:    req.Email,
-		Password: req.Password,
-	}
-	if err := h.service.SignUp(user); err != nil {
+	user, err := h.service.SignUp(req)
+	if err != nil {
 		resp := &errorResponse{err.Error()}
 		writeJSONResponse(w, http.StatusInternalServerError, resp)
 		return
 	}
 	writeJSONResponse(w, http.StatusOK, user)
+	log.Printf("elapsed time: %v", time.Since(startTime))
 }
 
 func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
-	req := new(signUpRequest)
+	req := new(model.SignInUserDTO)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		resp := &errorResponse{err.Error()}
 		writeJSONResponse(w, http.StatusBadRequest, resp)
 		return
 	}
 	defer r.Body.Close()
-	user := &model.User{
-		Username: req.Username,
-		Email:    req.Email,
-		Password: req.Password,
-	}
-	if err := h.service.SignIn(user); err != nil {
+	user, err := h.service.SignIn(req)
+	if err != nil {
 		resp := &errorResponse{err.Error()}
 		writeJSONResponse(w, http.StatusInternalServerError, resp)
 		return

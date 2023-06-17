@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -13,43 +14,43 @@ type authService struct {
 }
 
 type AuthRepository interface {
-	CreateAccount(*model.User) error
-	FindUserByName(string) (*model.User, error)
-	UpdateLastLogin(*model.User) error
+	CreateAccount(context.Context, *model.User) error
+	FindUserByEmail(context.Context, string) (*model.User, error)
+	UpdateLastLogin(context.Context, *model.User) error
 }
 
-func (s *authService) SignUp(user *model.User) error {
-	if err := user.Validate(); err != nil {
-		return err
+func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.User, error) {
+	if err := userDTO.Validate(); err != nil {
+		return nil, err
 	}
-	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
+	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(userDTO.Password), bcrypt.MinCost)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	user.Password = string(encryptedPassword)
-	user.CreatedOn = time.Now()
-	user.LastLogin = user.CreatedOn
-	if err := s.repo.CreateAccount(user); err != nil {
-		return err
+	user := &model.User{
+		Username:          userDTO.Username,
+		Email:             userDTO.Email,
+		EncryptedPassword: string(encryptedPassword),
+		CreatedOn:         time.Now(),
+		LastLogin:         time.Now(),
 	}
-	return nil
+	if err := s.repo.CreateAccount(context.Background(), user); err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
-func (s *authService) SignIn(user *model.User) error {
-	userFromDB, err := s.repo.FindUserByName(user.Username)
+func (s *authService) SignIn(userDTO *model.SignInUserDTO) (*model.User, error) {
+	userFromDB, err := s.repo.FindUserByEmail(context.Background(), userDTO.Email)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if userFromDB == nil {
-		return fmt.Errorf("user with name %s doesn't exist", user.Username)
+		return nil, fmt.Errorf("user with such email %s doesn't exist", userDTO.Email)
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(userFromDB.Password), []byte(user.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(userFromDB.EncryptedPassword), []byte(userDTO.Password))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	user.ID = userFromDB.ID
-	user.Password = userFromDB.Password
-	user.CreatedOn = userFromDB.CreatedOn
-	user.LastLogin = time.Now()
-	return s.repo.UpdateLastLogin(user)
+	return userFromDB, nil
 }

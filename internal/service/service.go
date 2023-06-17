@@ -3,8 +3,8 @@ package service
 import "github.com/kiryu-dev/mykinolist/internal/model"
 
 type AuthService interface {
-	SignUp(user *model.User) error
-	SignIn(user *model.User) error
+	SignUp(user *model.SignUpUserDTO) (*model.User, error)
+	SignIn(user *model.SignInUserDTO) (*model.User, error)
 	// SignOut() error
 	// Delete() error
 }

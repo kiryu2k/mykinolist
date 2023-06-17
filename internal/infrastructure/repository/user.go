@@ -1,7 +1,10 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
+	"time"
 
 	"github.com/kiryu-dev/mykinolist/internal/model"
 )
@@ -11,31 +14,28 @@ type userRepository struct {
 }
 
 // TODO: querycontext to cancel query
-func (r *userRepository) CreateAccount(user *model.User) error {
+func (r *userRepository) CreateAccount(ctx context.Context, user *model.User) error {
+	queryCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 	query := `
 INSERT INTO users (username, email, encrypted_password, created_on, last_login)
 VALUES ($1, $2, $3, $4, $5) RETURNING id;
 	`
-	rows, err := r.db.Query(query, user.Username, user.Email, user.Password,
-		user.CreatedOn, user.LastLogin)
-	if err != nil {
-		return err
+	err := r.db.QueryRowContext(queryCtx, query,
+		user.Username, user.Email, user.EncryptedPassword,
+		user.CreatedOn, user.LastLogin).Scan(&user.ID)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("failed to create a user")
 	}
-	defer rows.Close()
-	for rows.Next() {
-		if err := rows.Scan(&user.ID); err != nil {
-			return err
-		}
-	}
-	return nil
+	return err
 }
 
-func (r *userRepository) FindUserByName(username string) (*model.User, error) {
+func (r *userRepository) FindUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	query := `
 SELECT * FROM users
-WHERE username = $1;
+WHERE email = $1;
 	`
-	rows, err := r.db.Query(query, username)
+	rows, err := r.db.Query(query, email)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ WHERE username = $1;
 	return nil, err
 }
 
-func (r *userRepository) UpdateLastLogin(user *model.User) error {
+func (r *userRepository) UpdateLastLogin(ctx context.Context, user *model.User) error {
 	query := `
 UPDATE users
 SET last_login = $1
@@ -58,6 +58,6 @@ WHERE id = $2
 
 func scanUser(rows *sql.Rows) (*model.User, error) {
 	u := new(model.User)
-	err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.Password, &u.CreatedOn, &u.LastLogin)
+	err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.EncryptedPassword, &u.CreatedOn, &u.LastLogin)
 	return u, err
 }
