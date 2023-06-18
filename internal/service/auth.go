@@ -20,37 +20,45 @@ type AuthRepository interface {
 }
 
 func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	if err := userDTO.Validate(); err != nil {
 		return nil, err
 	}
-	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(userDTO.Password), bcrypt.MinCost)
+	HashedPassword, err := bcrypt.GenerateFromPassword([]byte(userDTO.Password), bcrypt.MinCost)
 	if err != nil {
 		return nil, err
 	}
 	user := &model.User{
-		Username:          userDTO.Username,
-		Email:             userDTO.Email,
-		EncryptedPassword: string(encryptedPassword),
-		CreatedOn:         time.Now(),
-		LastLogin:         time.Now(),
+		Username:       userDTO.Username,
+		Email:          userDTO.Email,
+		HashedPassword: string(HashedPassword),
+		CreatedOn:      time.Now(),
+		LastLogin:      time.Now(),
 	}
-	if err := s.repo.CreateAccount(context.Background(), user); err != nil {
+	if err := s.repo.CreateAccount(ctx, user); err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
 func (s *authService) SignIn(userDTO *model.SignInUserDTO) (*model.User, error) {
-	userFromDB, err := s.repo.FindUserByEmail(context.Background(), userDTO.Email)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	user, err := s.repo.FindUserByEmail(ctx, userDTO.Email)
 	if err != nil {
 		return nil, err
 	}
-	if userFromDB == nil {
+	if user == nil {
 		return nil, fmt.Errorf("user with such email %s doesn't exist", userDTO.Email)
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(userFromDB.EncryptedPassword), []byte(userDTO.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(userDTO.Password))
 	if err != nil {
 		return nil, err
 	}
-	return userFromDB, nil
+	user.LastLogin = time.Now()
+	if err := s.repo.UpdateLastLogin(ctx, user); err != nil {
+		return nil, err
+	}
+	return user, nil
 }
