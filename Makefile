@@ -7,6 +7,9 @@ run: build
 test:
 	@go test -v ./...
 
+lint:
+	@golangci-lint run --fast ./...
+
 DB_PORT := 5432
 DB_USER := kirrryu
 DB_PASSWORD := qwerty
