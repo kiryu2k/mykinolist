@@ -16,9 +16,7 @@ func (r *userRepository) CreateAccount(ctx context.Context, user *model.User) er
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = tx.Rollback()
-	}()
+	defer tx.Rollback()
 	query := `
 INSERT INTO users (username, email, Hashed_password, created_on, last_login)
 VALUES ($1, $2, $3, $4, $5) RETURNING id;
@@ -54,9 +52,7 @@ func (r *userRepository) UpdateLastLogin(ctx context.Context, user *model.User) 
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = tx.Rollback()
-	}()
+	defer tx.Rollback()
 	query := `
 UPDATE users
 SET last_login = $1
