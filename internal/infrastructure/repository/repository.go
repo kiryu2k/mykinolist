@@ -7,7 +7,7 @@ import (
 )
 
 type Repository struct {
-	service.AuthRepository
+	service.UserRepository
 }
 
 func New(db *sql.DB) *Repository {

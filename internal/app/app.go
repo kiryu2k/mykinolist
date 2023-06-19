@@ -1,23 +1,23 @@
 package app
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/kiryu-dev/mykinolist/internal/controller"
 	"github.com/kiryu-dev/mykinolist/internal/infrastructure/repository"
 	"github.com/kiryu-dev/mykinolist/internal/service"
-	"github.com/sirupsen/logrus"
 )
 
-func Run(port string, config *repository.Config) {
-	db, err := repository.NewPostgresDB(config)
+func Run(config *Config) {
+	db, err := repository.NewPostgresDB((*repository.Config)(config.DB))
 	if err != nil {
-		logrus.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 	repo := repository.New(db)
 	service := service.New(repo)
 	controller := controller.New(service)
-	if err := http.ListenAndServe(port, controller); err != nil {
-		logrus.Fatal(err.Error())
+	if err := http.ListenAndServe(config.ListeningPort, controller); err != nil {
+		log.Fatal(err.Error())
 	}
 }
