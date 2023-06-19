@@ -31,7 +31,7 @@ VALUES ($1, $2, $3, $4, $5) RETURNING id;
 	return err
 }
 
-func (r *userRepository) FindUserByEmail(ctx context.Context, email string) (*model.User, error) {
+func (r *userRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
 	query := `
 SELECT * FROM users
 WHERE email = $1;
@@ -64,4 +64,20 @@ WHERE id = $2
 	}
 	err = tx.Commit()
 	return err
+}
+
+func (r *userRepository) FindByID(ctx context.Context, id int64) (*model.User, error) {
+	query := `
+SELECT * FROM users
+WHERE id = $1;
+	`
+	user := new(model.User)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&user.ID, &user.Username, &user.Email,
+		&user.HashedPassword, &user.CreatedOn, &user.LastLogin,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }

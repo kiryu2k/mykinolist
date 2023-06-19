@@ -24,23 +24,24 @@ type authService struct {
 
 type UserRepository interface {
 	CreateAccount(context.Context, *model.User) error
-	FindUserByEmail(context.Context, string) (*model.User, error)
+	FindByEmail(context.Context, string) (*model.User, error)
 	UpdateLastLogin(context.Context, *model.User) error
+	FindByID(context.Context, int64) (*model.User, error)
 }
 
 type TokenRepository interface {
 	Save(context.Context, *model.UserToken) error
 }
 
-func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.User, *model.Tokens, error) {
+func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := userDTO.Validate(); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	HashedPassword, err := bcrypt.GenerateFromPassword([]byte(userDTO.Password), bcrypt.MinCost)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	user := &model.User{
 		Username:       userDTO.Username,
@@ -50,26 +51,15 @@ func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.User, *model.
 		LastLogin:      time.Now(),
 	}
 	if err := s.user.CreateAccount(ctx, user); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	tokens, err := s.generateTokens(user.ID)
-	if err != nil {
-		return nil, nil, err
-	}
-	err = s.token.Save(ctx, &model.UserToken{
-		UserID:       user.ID,
-		RefreshToken: tokens.RefreshToken,
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-	return user, tokens, nil
+	return user, nil
 }
 
 func (s *authService) SignIn(userDTO *model.SignInUserDTO) (*model.User, *model.Tokens, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	user, err := s.user.FindUserByEmail(ctx, userDTO.Email)
+	user, err := s.user.FindByEmail(ctx, userDTO.Email)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -122,4 +112,14 @@ func (s *authService) generateTokens(id int64) (*model.Tokens, error) {
 		return nil, err
 	}
 	return tokens, nil
+}
+
+func (s *authService) GetUser(id int64) (*model.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	user, err := s.user.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }

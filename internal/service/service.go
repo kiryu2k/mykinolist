@@ -6,8 +6,9 @@ import (
 )
 
 type AuthService interface {
-	SignUp(user *model.SignUpUserDTO) (*model.User, *model.Tokens, error)
-	SignIn(user *model.SignInUserDTO) (*model.User, *model.Tokens, error)
+	SignUp(*model.SignUpUserDTO) (*model.User, error)
+	SignIn(*model.SignInUserDTO) (*model.User, *model.Tokens, error)
+	GetUser(int64) (*model.User, error)
 	// SignOut() error
 	// Delete() error
 }
