@@ -1,4 +1,4 @@
-package app
+package config
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	"github.com/subosito/gotenv"
 )
 
-type dbConfig struct {
+type DBConfig struct {
 	Host     string
 	Port     string
 	Username string
@@ -20,7 +20,7 @@ type Config struct {
 	ListeningPort       string
 	JWTAccessSecretKey  string
 	JWTRefreshSecretKey string
-	DB                  *dbConfig
+	DB                  *DBConfig
 }
 
 func LoadConfig(configPath string) (*Config, error) {
@@ -35,7 +35,7 @@ func LoadConfig(configPath string) (*Config, error) {
 		ListeningPort:       viper.GetString("port"),
 		JWTAccessSecretKey:  os.Getenv("JWT_ACCESS_SECRET_KEY"),
 		JWTRefreshSecretKey: os.Getenv("JWT_REFRESH_SECRET_KEY"),
-		DB: &dbConfig{
+		DB: &DBConfig{
 			Host:     viper.GetString("db.host"),
 			Port:     viper.GetString("db.port"),
 			Username: viper.GetString("db.username"),
