@@ -2,8 +2,10 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -17,12 +19,6 @@ type authHandler struct {
 	service service.AuthService
 }
 
-func InitAuthRoutes(router *mux.Router, s service.AuthService) {
-	handler := &authHandler{service: s}
-	router.HandleFunc("/auth/signup", handler.signUp).Methods(http.MethodPost)
-	router.HandleFunc("/auth/signin", handler.signIn).Methods(http.MethodGet)
-}
-
 func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 	req := new(model.SignUpUserDTO)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
@@ -32,21 +28,14 @@ func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	startTime := time.Now()
-	user, tokens, err := h.service.SignUp(req)
+	user, err := h.service.SignUp(req)
 	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
 		resp := &errorResponse{err.Error()}
 		writeJSONResponse(w, http.StatusInternalServerError, resp)
 		return
 	}
-	w.Header().Add("X-Authorization", tokens.AccessToken)
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refreshToken",
-		Value:    tokens.RefreshToken,
-		MaxAge:   cookieMaxAge,
-		HttpOnly: true,
-	})
-	writeJSONResponse(w, http.StatusOK, map[string]any{"user": user, "tokens": tokens})
+	writeJSONResponse(w, http.StatusOK, user)
 }
 
 func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +54,7 @@ func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, http.StatusInternalServerError, resp)
 		return
 	}
-	w.Header().Add("X-Authorization", tokens.AccessToken)
+	w.Header().Add("X-Authorization", fmt.Sprintf("Bearer %s", tokens.AccessToken))
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refreshToken",
 		Value:    tokens.RefreshToken,
@@ -73,4 +62,30 @@ func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 	writeJSONResponse(w, http.StatusOK, map[string]any{"user": user, "tokens": tokens})
+}
+
+func (h *authHandler) getUser(w http.ResponseWriter, r *http.Request) {
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		resp := &errorResponse{err.Error()}
+		writeJSONResponse(w, http.StatusBadRequest, resp)
+		return
+	}
+	idFromCtx := r.Context().Value("userID")
+	fmt.Println(idFromCtx, id) // try to change access token lifetime to 10-20 seconds for testing
+	if id != idFromCtx {
+		resp := &errorResponse{"cannot get other's account info"}
+		writeJSONResponse(w, http.StatusForbidden, resp)
+		return
+	}
+	startTime := time.Now()
+	user, err := h.service.GetUser(id)
+	log.Printf("elapsed time: %v", time.Since(startTime))
+	if err != nil {
+		resp := &errorResponse{err.Error()}
+		writeJSONResponse(w, http.StatusInternalServerError, resp)
+		return
+	}
+	writeJSONResponse(w, http.StatusOK, user)
 }
