@@ -13,10 +13,19 @@ type UserToken struct {
 }
 
 type Payload struct {
-	UserID int64
+	UserID int64 `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
-func (t *Tokens) ValidateAccessToken() error {
-	return nil
+func ParseAccessToken(tokenStr, secretKey string) (int64, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &Payload{}, func(token *jwt.Token) (any, error) {
+		return []byte(secretKey), nil
+	})
+	claims, ok := token.Claims.(*Payload)
+	if !ok || !token.Valid {
+		return 0, err
+	}
+	return claims.UserID, nil
 }
+
+// func ParseRefreshToken
