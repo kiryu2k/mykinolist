@@ -15,8 +15,9 @@ func Run(config *config.Config) {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	defer db.Close()
 	repo := repository.New(db)
-	service := service.New(repo, config)
+	service := service.New(repo, repo, config)
 	controller := controller.New(service)
 	if err := http.ListenAndServe(config.ListeningPort, controller); err != nil {
 		log.Fatal(err.Error())

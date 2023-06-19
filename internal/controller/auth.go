@@ -30,17 +30,18 @@ func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-	user, err := h.service.SignUp(req)
+	user, tokens, err := h.service.SignUp(req)
 	if err != nil {
 		resp := &errorResponse{err.Error()}
 		writeJSONResponse(w, http.StatusInternalServerError, resp)
 		return
 	}
-	writeJSONResponse(w, http.StatusOK, user)
+	writeJSONResponse(w, http.StatusOK, map[string]any{"user": user, "tokens": tokens})
 	log.Printf("elapsed time: %v", time.Since(startTime))
 }
 
 func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
 	req := new(model.SignInUserDTO)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		resp := &errorResponse{err.Error()}
@@ -48,11 +49,12 @@ func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-	user, err := h.service.SignIn(req)
+	user, tokens, err := h.service.SignIn(req)
 	if err != nil {
 		resp := &errorResponse{err.Error()}
 		writeJSONResponse(w, http.StatusInternalServerError, resp)
 		return
 	}
-	writeJSONResponse(w, http.StatusOK, user)
+	writeJSONResponse(w, http.StatusOK, map[string]any{"user": user, "tokens": tokens})
+	log.Printf("elapsed time: %v", time.Since(startTime))
 }

@@ -17,8 +17,9 @@ const (
 )
 
 type authService struct {
-	repo UserRepository
-	cfg  *config.Config
+	user  UserRepository
+	token TokenRepository
+	cfg   *config.Config
 }
 
 type UserRepository interface {
@@ -28,18 +29,18 @@ type UserRepository interface {
 }
 
 type TokenRepository interface {
-	CreateTokens(context.Context) (*model.Tokens, error)
+	Save(context.Context, *model.UserToken) error
 }
 
-func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.User, error) {
+func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.User, *model.Tokens, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := userDTO.Validate(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	HashedPassword, err := bcrypt.GenerateFromPassword([]byte(userDTO.Password), bcrypt.MinCost)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	user := &model.User{
 		Username:       userDTO.Username,
@@ -48,41 +49,59 @@ func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.User, error) 
 		CreatedOn:      time.Now(),
 		LastLogin:      time.Now(),
 	}
-	if err := s.repo.CreateAccount(ctx, user); err != nil {
-		return nil, err
-	}
-	return user, nil
-}
-
-func (s *authService) SignIn(userDTO *model.SignInUserDTO) (*model.Tokens, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	user, err := s.repo.FindUserByEmail(ctx, userDTO.Email)
-	if err != nil {
-		return nil, err
-	}
-	if user == nil {
-		return nil, fmt.Errorf("user with such email %s doesn't exist", userDTO.Email)
-	}
-	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(userDTO.Password))
-	if err != nil {
-		return nil, err
+	if err := s.user.CreateAccount(ctx, user); err != nil {
+		return nil, nil, err
 	}
 	tokens, err := s.generateTokens(user.ID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	err = s.token.Save(ctx, &model.UserToken{
+		UserID:       user.ID,
+		RefreshToken: tokens.RefreshToken,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	return user, tokens, nil
+}
+
+func (s *authService) SignIn(userDTO *model.SignInUserDTO) (*model.User, *model.Tokens, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	user, err := s.user.FindUserByEmail(ctx, userDTO.Email)
+	if err != nil {
+		return nil, nil, err
+	}
+	if user == nil {
+		return nil, nil, fmt.Errorf("user with such email %s doesn't exist", userDTO.Email)
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(userDTO.Password))
+	if err != nil {
+		return nil, nil, err
+	}
+	tokens, err := s.generateTokens(user.ID)
+	if err != nil {
+		return nil, nil, err
 	}
 	user.LastLogin = time.Now()
-	if err := s.repo.UpdateLastLogin(ctx, user); err != nil {
-		return nil, err
+	if err := s.user.UpdateLastLogin(ctx, user); err != nil {
+		return nil, nil, err
 	}
-	return tokens, nil
+	err = s.token.Save(ctx, &model.UserToken{
+		UserID:       user.ID,
+		RefreshToken: tokens.RefreshToken,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	return user, tokens, nil
 }
 
 func (s *authService) generateTokens(id int64) (*model.Tokens, error) {
 	tokens := new(model.Tokens)
 	/* access token payload */
-	ATPayload := &model.Payload{id, jwt.RegisteredClaims{
+	ATPayload := &model.Payload{UserID: id, RegisteredClaims: jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTokenTTL)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}}
@@ -93,7 +112,7 @@ func (s *authService) generateTokens(id int64) (*model.Tokens, error) {
 		return nil, err
 	}
 	/* refresh token payload */
-	RTPayload := &model.Payload{id, jwt.RegisteredClaims{
+	RTPayload := &model.Payload{UserID: id, RegisteredClaims: jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTokenTTL)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}}

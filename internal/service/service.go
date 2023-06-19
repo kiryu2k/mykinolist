@@ -6,8 +6,8 @@ import (
 )
 
 type AuthService interface {
-	SignUp(user *model.SignUpUserDTO) (*model.User, error)
-	SignIn(user *model.SignInUserDTO) (*model.Tokens, error)
+	SignUp(user *model.SignUpUserDTO) (*model.User, *model.Tokens, error)
+	SignIn(user *model.SignInUserDTO) (*model.User, *model.Tokens, error)
 	// SignOut() error
 	// Delete() error
 }
@@ -17,8 +17,8 @@ type Service struct {
 	// ListService
 }
 
-func New(repo UserRepository, config *config.Config) *Service {
+func New(user UserRepository, token TokenRepository, config *config.Config) *Service {
 	return &Service{
-		AuthService: &authService{repo, config},
+		AuthService: &authService{user, token, config},
 	}
 }
