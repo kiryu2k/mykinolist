@@ -12,3 +12,8 @@ CREATE TABLE users (
     last_login TIMESTAMP
     -- list_id SERIAL REFERENCES lists (id) ON DELETE CASCADE 
 );
+
+CREATE TABLE tokens (
+    user_id SERIAL REFERENCES users (id) ON DELETE CASCADE,
+    refresh_token VARCHAR(200) UNIQUE NOT NULL
+);

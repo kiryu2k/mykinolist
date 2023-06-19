@@ -7,7 +7,11 @@ type Tokens struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-/* if wanna expand payload */
+type UserToken struct {
+	UserID       int64  `json:"user_id"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 type Payload struct {
 	UserID int64
 	jwt.RegisteredClaims
