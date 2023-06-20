@@ -28,14 +28,14 @@ func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	startTime := time.Now()
-	user, err := h.service.SignUp(req)
+	id, err := h.service.SignUp(req)
 	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
 		resp := &errorResponse{err.Error()}
 		writeJSONResponse(w, http.StatusInternalServerError, resp)
 		return
 	}
-	writeJSONResponse(w, http.StatusOK, user)
+	writeJSONResponse(w, http.StatusOK, map[string]int64{"id": id})
 }
 
 func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +47,7 @@ func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	startTime := time.Now()
-	user, tokens, err := h.service.SignIn(req)
+	tokens, err := h.service.SignIn(req)
 	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
 		resp := &errorResponse{err.Error()}
@@ -61,7 +61,29 @@ func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   cookieMaxAge,
 		HttpOnly: true,
 	})
-	writeJSONResponse(w, http.StatusOK, map[string]any{"user": user, "tokens": tokens})
+	writeJSONResponse(w, http.StatusOK, tokens)
+}
+
+func (h *authHandler) signOut(w http.ResponseWriter, r *http.Request) {
+	refreshToken, err := r.Cookie("refreshToken")
+	if err != nil {
+		resp := &errorResponse{err.Error()}
+		writeJSONResponse(w, http.StatusBadRequest, resp)
+		return
+	}
+	if err := h.service.SignOut(refreshToken.Value); err != nil {
+		resp := &errorResponse{err.Error()}
+		writeJSONResponse(w, http.StatusBadRequest, resp)
+		return
+	}
+	/* set to remove */
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refreshToken",
+		Value:    "",
+		MaxAge:   -1,
+		HttpOnly: true,
+	})
+	w.Write([]byte("u've successfully logged out"))
 }
 
 func (h *authHandler) getUser(w http.ResponseWriter, r *http.Request) {

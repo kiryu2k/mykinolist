@@ -31,17 +31,18 @@ type UserRepository interface {
 
 type TokenRepository interface {
 	Save(context.Context, *model.UserToken) error
+	Remove(context.Context, string) error
 }
 
-func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.User, error) {
+func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := userDTO.Validate(); err != nil {
-		return nil, err
+		return 0, err
 	}
 	HashedPassword, err := bcrypt.GenerateFromPassword([]byte(userDTO.Password), bcrypt.MinCost)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	user := &model.User{
 		Username:       userDTO.Username,
@@ -51,41 +52,47 @@ func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.User, error) 
 		LastLogin:      time.Now(),
 	}
 	if err := s.user.CreateAccount(ctx, user); err != nil {
-		return nil, err
+		return 0, err
 	}
-	return user, nil
+	return user.ID, nil
 }
 
-func (s *authService) SignIn(userDTO *model.SignInUserDTO) (*model.User, *model.Tokens, error) {
+func (s *authService) SignIn(userDTO *model.SignInUserDTO) (*model.Tokens, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	user, err := s.user.FindByEmail(ctx, userDTO.Email)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if user == nil {
-		return nil, nil, fmt.Errorf("user with such email %s doesn't exist", userDTO.Email)
+		return nil, fmt.Errorf("user with such email %s doesn't exist", userDTO.Email)
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(userDTO.Password))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	tokens, err := s.generateTokens(user.ID)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	user.LastLogin = time.Now()
 	if err := s.user.UpdateLastLogin(ctx, user); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	err = s.token.Save(ctx, &model.UserToken{
 		UserID:       user.ID,
 		RefreshToken: tokens.RefreshToken,
 	})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return user, tokens, nil
+	return tokens, nil
+}
+
+func (s *authService) SignOut(refreshToken string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return s.token.Remove(ctx, refreshToken)
 }
 
 func (s *authService) generateTokens(id int64) (*model.Tokens, error) {
