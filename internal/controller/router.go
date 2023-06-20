@@ -20,7 +20,8 @@ func initAuthRoutes(router *mux.Router, s service.AuthService) {
 	postRouter.HandleFunc("/signup", handler.signUp)
 	postRouter.HandleFunc("/signin", handler.signIn)
 	postRouter.HandleFunc("/signout", handler.signOut)
-	getRouter := router.Methods(http.MethodGet).Subrouter()
-	getRouter.HandleFunc("/user/{id:[0-9]+}", handler.getUser)
-	getRouter.Use(handler.IdentifyUser)
+	userRouter := router.PathPrefix("/user").Subrouter()
+	userRouter.HandleFunc("/{id:[0-9]+}", handler.getUser).Methods(http.MethodGet)
+	userRouter.HandleFunc("/{id:[0-9]+}", handler.deleteUser).Methods(http.MethodDelete)
+	userRouter.Use(handler.IdentifyUser)
 }

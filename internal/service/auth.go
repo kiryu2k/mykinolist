@@ -27,6 +27,7 @@ type UserRepository interface {
 	FindByEmail(context.Context, string) (*model.User, error)
 	UpdateLastLogin(context.Context, *model.User) error
 	FindByID(context.Context, int64) (*model.User, error)
+	DeleteAccount(context.Context, int64) error
 }
 
 type TokenRepository interface {
@@ -168,6 +169,19 @@ func (s *authService) GetUser(id int64) (*model.User, error) {
 	defer cancel()
 	user, err := s.user.FindByID(ctx, id)
 	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *authService) Delete(id int64) (*model.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	user, err := s.user.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.user.DeleteAccount(ctx, id); err != nil {
 		return nil, err
 	}
 	return user, nil

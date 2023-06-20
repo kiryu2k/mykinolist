@@ -27,9 +27,7 @@ func (r *tokenRepository) Save(ctx context.Context, userToken *model.UserToken) 
 }
 
 func (r *tokenRepository) Remove(ctx context.Context, refreshToken string) error {
-	query := `
-DELETE FROM tokens WHERE refresh_token = $1;
-	`
+	query := `DELETE FROM tokens WHERE refresh_token = $1;`
 	res, err := r.db.ExecContext(ctx, query, refreshToken)
 	if err != nil {
 		return err
@@ -46,9 +44,7 @@ DELETE FROM tokens WHERE refresh_token = $1;
 
 func (r *tokenRepository) findByID(ctx context.Context, id int64) (*model.UserToken, error) {
 	userToken := new(model.UserToken)
-	query := `
-SELECT * FROM tokens WHERE user_id = $1;
-	`
+	query := `SELECT * FROM tokens WHERE user_id = $1;`
 	err := r.db.QueryRowContext(ctx, query, id).Scan(&userToken.UserID, &userToken.RefreshToken)
 	if err != nil {
 		return nil, err

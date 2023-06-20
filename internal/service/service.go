@@ -13,7 +13,7 @@ type AuthService interface {
 	ParseAccessToken(string) (int64, error)
 	ParseRefreshToken(string) (int64, error)
 	UpdateTokens(int64) (*model.Tokens, error)
-	// Delete() error
+	Delete(int64) (*model.User, error)
 }
 
 type Service struct {

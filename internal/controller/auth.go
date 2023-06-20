@@ -107,6 +107,31 @@ func (h *authHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	writeJSONResponse(w, http.StatusOK, user)
 }
 
+func (h *authHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		resp := &errorResponse{err.Error()}
+		writeJSONResponse(w, http.StatusBadRequest, resp)
+		return
+	}
+	idFromCtx := r.Context().Value("userID")
+	if id != idFromCtx {
+		resp := &errorResponse{"cannot delete someone else's account"}
+		writeJSONResponse(w, http.StatusForbidden, resp)
+		return
+	}
+	startTime := time.Now()
+	user, err := h.service.Delete(id)
+	log.Printf("elapsed time: %v", time.Since(startTime))
+	if err != nil {
+		resp := &errorResponse{err.Error()}
+		writeJSONResponse(w, http.StatusBadRequest, resp)
+		return
+	}
+	writeJSONResponse(w, http.StatusOK, user)
+}
+
 func removeRefreshTokenCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refreshToken",
