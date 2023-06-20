@@ -27,7 +27,6 @@ func (h *authHandler) IdentifyUser(next http.Handler) http.Handler {
 			writeJSONResponse(w, http.StatusUnauthorized, resp)
 			return
 		}
-		fmt.Println(err.Error(), userID)
 		refreshToken, err := r.Cookie("refreshToken")
 		if err != nil {
 			resp := &errorResponse{err.Error()}
