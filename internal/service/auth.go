@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	accessTokenTTL  = 30 * time.Minute
+	accessTokenTTL  = 30 * time.Second // 30 * time.Minute
 	refreshTokenTTL = 30 * 24 * time.Hour
 )
 
@@ -115,6 +115,48 @@ func (s *authService) generateTokens(id int64) (*model.Tokens, error) {
 	}}
 	tokens.RefreshToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, RTPayload).
 		SignedString([]byte(s.cfg.JWTRefreshSecretKey))
+	if err != nil {
+		return nil, err
+	}
+	return tokens, nil
+}
+
+func (s *authService) ParseAccessToken(tokenStr string) (int64, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &model.Payload{}, func(token *jwt.Token) (any, error) {
+		return []byte(s.cfg.JWTAccessSecretKey), nil
+	})
+	claims, ok := token.Claims.(*model.Payload)
+	if !ok {
+		return 0, err
+	}
+	if !token.Valid {
+		return claims.UserID, &model.TokenError{Message: "token expiration date has passed"}
+	}
+	return claims.UserID, nil
+}
+
+func (s *authService) ParseRefreshToken(tokenStr string) (int64, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, &model.Payload{}, func(token *jwt.Token) (any, error) {
+		return []byte(s.cfg.JWTRefreshSecretKey), nil
+	})
+	claims, ok := token.Claims.(*model.Payload)
+	if !ok || !token.Valid {
+		return 0, err
+	}
+	return claims.UserID, nil
+}
+
+func (s *authService) UpdateTokens(id int64) (*model.Tokens, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	tokens, err := s.generateTokens(id)
+	if err != nil {
+		return nil, err
+	}
+	err = s.token.Save(ctx, &model.UserToken{
+		UserID:       id,
+		RefreshToken: tokens.RefreshToken,
+	})
 	if err != nil {
 		return nil, err
 	}

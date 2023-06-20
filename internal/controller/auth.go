@@ -54,10 +54,11 @@ func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, http.StatusInternalServerError, resp)
 		return
 	}
-	w.Header().Add("X-Authorization", fmt.Sprintf("Bearer %s", tokens.AccessToken))
+	w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", tokens.AccessToken))
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refreshToken",
 		Value:    tokens.RefreshToken,
+		Path:     "/auth",
 		MaxAge:   cookieMaxAge,
 		HttpOnly: true,
 	})
@@ -77,12 +78,7 @@ func (h *authHandler) signOut(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	/* set to remove */
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refreshToken",
-		Value:    "",
-		MaxAge:   -1,
-		HttpOnly: true,
-	})
+	removeRefreshTokenCookie(w)
 	w.Write([]byte("u've successfully logged out"))
 }
 
@@ -109,4 +105,14 @@ func (h *authHandler) getUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSONResponse(w, http.StatusOK, user)
+}
+
+func removeRefreshTokenCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refreshToken",
+		Value:    "",
+		Path:     "/auth",
+		MaxAge:   -1,
+		HttpOnly: true,
+	})
 }

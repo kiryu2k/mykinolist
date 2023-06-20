@@ -17,15 +17,12 @@ type Payload struct {
 	jwt.RegisteredClaims
 }
 
-func ParseAccessToken(tokenStr, secretKey string) (int64, error) {
-	token, err := jwt.ParseWithClaims(tokenStr, &Payload{}, func(token *jwt.Token) (any, error) {
-		return []byte(secretKey), nil
-	})
-	claims, ok := token.Claims.(*Payload)
-	if !ok || !token.Valid {
-		return 0, err
-	}
-	return claims.UserID, nil
+type TokenError struct {
+	Message string
+}
+
+func (e *TokenError) Error() string {
+	return e.Message
 }
 
 // func ParseRefreshToken

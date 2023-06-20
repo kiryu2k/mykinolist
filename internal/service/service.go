@@ -8,8 +8,11 @@ import (
 type AuthService interface {
 	SignUp(*model.SignUpUserDTO) (int64, error)
 	SignIn(*model.SignInUserDTO) (*model.Tokens, error)
-	GetUser(int64) (*model.User, error)
 	SignOut(string) error
+	GetUser(int64) (*model.User, error)
+	ParseAccessToken(string) (int64, error)
+	ParseRefreshToken(string) (int64, error)
+	UpdateTokens(int64) (*model.Tokens, error)
 	// Delete() error
 }
 
