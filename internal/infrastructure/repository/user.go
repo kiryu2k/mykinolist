@@ -12,22 +12,13 @@ type userRepository struct {
 }
 
 func (r *userRepository) CreateAccount(ctx context.Context, user *model.User) error {
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
 	query := `
 INSERT INTO users (username, email, Hashed_password, created_on, last_login)
 VALUES ($1, $2, $3, $4, $5) RETURNING id;
 	`
-	err = tx.QueryRowContext(ctx, query,
+	err := r.db.QueryRowContext(ctx, query,
 		user.Username, user.Email, user.HashedPassword,
 		user.CreatedOn, user.LastLogin).Scan(&user.ID)
-	if err != nil {
-		return err
-	}
-	err = tx.Commit()
 	return err
 }
 
@@ -48,21 +39,12 @@ WHERE email = $1;
 }
 
 func (r *userRepository) UpdateLastLogin(ctx context.Context, user *model.User) error {
-	tx, err := r.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
 	query := `
 UPDATE users
 SET last_login = $1
 WHERE id = $2
 	`
-	_, err = tx.ExecContext(ctx, query, user.LastLogin, user.ID)
-	if err != nil {
-		return err
-	}
-	err = tx.Commit()
+	_, err := r.db.ExecContext(ctx, query, user.LastLogin, user.ID)
 	return err
 }
 

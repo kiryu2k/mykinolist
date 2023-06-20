@@ -73,7 +73,6 @@ func (h *authHandler) getUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	idFromCtx := r.Context().Value("userID")
-	fmt.Println(idFromCtx, id) // try to change access token lifetime to 10-20 seconds for testing
 	if id != idFromCtx {
 		resp := &errorResponse{"cannot get other's account info"}
 		writeJSONResponse(w, http.StatusForbidden, resp)
