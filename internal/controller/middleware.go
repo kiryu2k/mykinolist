@@ -17,7 +17,7 @@ func (h *authHandler) IdentifyUser(next http.Handler) http.Handler {
 			return
 		}
 		userID, err := h.service.ParseAccessToken(tokenParts[1])
-		ctx := context.WithValue(r.Context(), "userID", userID)
+		ctx := context.WithValue(r.Context(), userIDKey{}, userID)
 		r = r.WithContext(ctx)
 		if err == nil {
 			next.ServeHTTP(w, r)

@@ -15,6 +15,8 @@ import (
 
 const cookieMaxAge = 30 * 24 * 60 * 60 // 30 days
 
+type userIDKey struct{}
+
 type authHandler struct {
 	service service.AuthService
 }
@@ -90,7 +92,7 @@ func (h *authHandler) getUser(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, http.StatusBadRequest, resp)
 		return
 	}
-	idFromCtx := r.Context().Value("userID").(int64)
+	idFromCtx := r.Context().Value(userIDKey{}).(int64)
 	if id != idFromCtx {
 		resp := &errorResponse{"cannot get other's account info"}
 		writeJSONResponse(w, http.StatusForbidden, resp)
@@ -115,7 +117,7 @@ func (h *authHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, http.StatusBadRequest, resp)
 		return
 	}
-	idFromCtx := r.Context().Value("userID").(int64)
+	idFromCtx := r.Context().Value(userIDKey{}).(int64)
 	if id != idFromCtx {
 		resp := &errorResponse{"cannot delete someone else's account"}
 		writeJSONResponse(w, http.StatusForbidden, resp)
