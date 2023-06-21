@@ -113,7 +113,7 @@ func (s *authService) generateTokens(id int64) (*model.Tokens, error) {
 		wg      = &sync.WaitGroup{}
 	)
 	wg.Add(2)
-	/* access token payload */
+	/* access token */
 	go func() {
 		ATPayload := &model.Payload{UserID: id, RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTokenTTL)),
@@ -125,7 +125,7 @@ func (s *authService) generateTokens(id int64) (*model.Tokens, error) {
 		errChan <- err
 		wg.Done()
 	}()
-	/* refresh token payload */
+	/* refresh token */
 	go func() {
 		RTPayload := &model.Payload{UserID: id, RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTokenTTL)),

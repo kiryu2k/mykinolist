@@ -18,8 +18,9 @@ func (h *authHandler) IdentifyUser(next http.Handler) http.Handler {
 		}
 		userID, err := h.service.ParseAccessToken(tokenParts[1])
 		ctx := context.WithValue(r.Context(), "userID", userID)
+		r = r.WithContext(ctx)
 		if err == nil {
-			next.ServeHTTP(w, r.WithContext(ctx))
+			next.ServeHTTP(w, r)
 			return
 		}
 		if err.Error() != "token expiration date has passed" {
@@ -38,8 +39,8 @@ func (h *authHandler) IdentifyUser(next http.Handler) http.Handler {
 			writeJSONResponse(w, http.StatusBadRequest, resp)
 			return
 		}
-		h.updateTokens(w, r.WithContext(ctx))
-		next.ServeHTTP(w, r.WithContext(ctx))
+		h.updateTokens(w, r)
+		next.ServeHTTP(w, r)
 	})
 }
 
