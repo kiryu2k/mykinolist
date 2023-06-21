@@ -79,7 +79,6 @@ func (h *authHandler) signOut(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, http.StatusBadRequest, resp)
 		return
 	}
-	/* set to remove */
 	removeRefreshTokenCookie(w)
 	w.Write([]byte("u've successfully logged out"))
 }

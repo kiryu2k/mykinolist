@@ -5,6 +5,8 @@ import (
 	"github.com/kiryu-dev/mykinolist/internal/model"
 )
 
+//go:generate mockgen -source=service.go -destination=mocks/mock.go
+
 type AuthService interface {
 	SignUp(*model.SignUpUserDTO) (int64, error)
 	SignIn(*model.SignInUserDTO) (*model.Tokens, error)
