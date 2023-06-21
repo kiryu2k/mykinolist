@@ -90,7 +90,7 @@ func (h *authHandler) getUser(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, http.StatusBadRequest, resp)
 		return
 	}
-	idFromCtx := r.Context().Value("userID")
+	idFromCtx := r.Context().Value("userID").(int64)
 	if id != idFromCtx {
 		resp := &errorResponse{"cannot get other's account info"}
 		writeJSONResponse(w, http.StatusForbidden, resp)
@@ -115,7 +115,7 @@ func (h *authHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, http.StatusBadRequest, resp)
 		return
 	}
-	idFromCtx := r.Context().Value("userID")
+	idFromCtx := r.Context().Value("userID").(int64)
 	if id != idFromCtx {
 		resp := &errorResponse{"cannot delete someone else's account"}
 		writeJSONResponse(w, http.StatusForbidden, resp)
