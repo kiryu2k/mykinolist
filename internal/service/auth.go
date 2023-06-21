@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -63,9 +64,6 @@ func (s *authService) SignIn(userDTO *model.SignInUserDTO) (*model.Tokens, error
 	defer cancel()
 	user, err := s.user.FindByEmail(ctx, userDTO.Email)
 	if err != nil {
-		return nil, err
-	}
-	if user == nil {
 		return nil, fmt.Errorf("user with such email %s doesn't exist", userDTO.Email)
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(userDTO.Password))
@@ -76,16 +74,27 @@ func (s *authService) SignIn(userDTO *model.SignInUserDTO) (*model.Tokens, error
 	if err != nil {
 		return nil, err
 	}
-	user.LastLogin = time.Now()
-	if err := s.user.UpdateLastLogin(ctx, user); err != nil {
-		return nil, err
-	}
-	err = s.token.Save(ctx, &model.UserToken{
-		UserID:       user.ID,
-		RefreshToken: tokens.RefreshToken,
-	})
-	if err != nil {
-		return nil, err
+	errChan := make(chan error, 2)
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		user.LastLogin = time.Now()
+		errChan <- s.user.UpdateLastLogin(ctx, user)
+		wg.Done()
+	}()
+	go func() {
+		errChan <- s.token.Save(ctx, &model.UserToken{
+			UserID:       user.ID,
+			RefreshToken: tokens.RefreshToken,
+		})
+		wg.Done()
+	}()
+	wg.Wait()
+	close(errChan)
+	for err := range errChan {
+		if err != nil {
+			return nil, err
+		}
 	}
 	return tokens, nil
 }
@@ -97,29 +106,47 @@ func (s *authService) SignOut(refreshToken string) error {
 }
 
 func (s *authService) generateTokens(id int64) (*model.Tokens, error) {
-	tokens := new(model.Tokens)
+	var (
+		ATChan  = make(chan string, 1)
+		RTChan  = make(chan string, 1)
+		errChan = make(chan error, 2)
+		wg      = &sync.WaitGroup{}
+	)
+	wg.Add(2)
 	/* access token payload */
-	ATPayload := &model.Payload{UserID: id, RegisteredClaims: jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTokenTTL)),
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
-	}}
-	var err error
-	tokens.AccessToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, ATPayload).
-		SignedString([]byte(s.cfg.JWTAccessSecretKey))
-	if err != nil {
-		return nil, err
-	}
+	go func() {
+		ATPayload := &model.Payload{UserID: id, RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTokenTTL)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		}}
+		token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, ATPayload).
+			SignedString([]byte(s.cfg.JWTAccessSecretKey))
+		ATChan <- token
+		errChan <- err
+		wg.Done()
+	}()
 	/* refresh token payload */
-	RTPayload := &model.Payload{UserID: id, RegisteredClaims: jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTokenTTL)),
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
-	}}
-	tokens.RefreshToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, RTPayload).
-		SignedString([]byte(s.cfg.JWTRefreshSecretKey))
-	if err != nil {
-		return nil, err
+	go func() {
+		RTPayload := &model.Payload{UserID: id, RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTokenTTL)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		}}
+		token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, RTPayload).
+			SignedString([]byte(s.cfg.JWTRefreshSecretKey))
+		RTChan <- token
+		errChan <- err
+		wg.Done()
+	}()
+	wg.Wait()
+	close(errChan)
+	for err := range errChan {
+		if err != nil {
+			<-ATChan
+			<-RTChan
+			return nil, err
+		}
 	}
-	return tokens, nil
+	return &model.Tokens{AccessToken: <-ATChan, RefreshToken: <-RTChan}, nil
 }
 
 func (s *authService) ParseAccessToken(tokenStr string) (int64, error) {
