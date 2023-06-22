@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (h *authHandler) IdentifyUser(next http.Handler) http.Handler {
+func (h *authHandler) identifyUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenStr := r.Header.Get("Authorization")
 		tokenParts := strings.Split(tokenStr, " ")
@@ -45,7 +45,7 @@ func (h *authHandler) IdentifyUser(next http.Handler) http.Handler {
 }
 
 func (h *authHandler) updateTokens(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value("userID").(int64)
+	userID := r.Context().Value(userIDKey{}).(int64)
 	tokens, err := h.service.UpdateTokens(userID)
 	if err != nil {
 		resp := &errorResponse{err.Error()}

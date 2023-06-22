@@ -34,7 +34,7 @@ func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
 		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusInternalServerError, resp)
+		writeJSONResponse(w, http.StatusBadRequest, resp)
 		return
 	}
 	writeJSONResponse(w, http.StatusOK, map[string]int64{"id": id})
@@ -53,7 +53,7 @@ func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
 	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
 		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusInternalServerError, resp)
+		writeJSONResponse(w, http.StatusBadRequest, resp)
 		return
 	}
 	w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", tokens.AccessToken))
