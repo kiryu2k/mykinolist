@@ -16,17 +16,18 @@ import (
 
 func TestController_IdentifyUser(t *testing.T) {
 	type mockBehavior func(s *mock_service.MockAuthService, tokens *model.Tokens)
-	testTable := []struct {
-		name                string
-		headerName          string
-		headerValue         string
-		cookieName          string
-		cookieValue         string
-		tokens              model.Tokens
-		mockBehavior        mockBehavior
-		expectedStatusCode  int
-		expectedRequestBody string
-	}{
+	type testCase struct {
+		name                 string
+		headerName           string
+		headerValue          string
+		cookieName           string
+		cookieValue          string
+		tokens               model.Tokens
+		mockBehavior         mockBehavior
+		expectedStatusCode   int
+		expectedResponseBody string
+	}
+	testCases := []testCase{
 		{
 			name:        "OK",
 			headerName:  "Authorization",
@@ -38,8 +39,8 @@ func TestController_IdentifyUser(t *testing.T) {
 			mockBehavior: func(s *mock_service.MockAuthService, tokens *model.Tokens) {
 				s.EXPECT().ParseAccessToken(tokens.AccessToken).Return(int64(666), nil)
 			},
-			expectedStatusCode:  http.StatusOK,
-			expectedRequestBody: "666",
+			expectedStatusCode:   http.StatusOK,
+			expectedResponseBody: "666",
 		},
 		{
 			name:        "Access token out of date",
@@ -57,10 +58,13 @@ func TestController_IdentifyUser(t *testing.T) {
 					id, fmt.Errorf("token expiration date has passed"),
 				)
 				s.EXPECT().ParseRefreshToken(tokens.RefreshToken).Return(id, nil)
-				s.EXPECT().UpdateTokens(id).Return(&model.Tokens{}, nil) // user gets new tokens
+				s.EXPECT().UpdateTokens(id).Return(&model.Tokens{
+					AccessToken:  "new_access_token",
+					RefreshToken: "new_refresh_token",
+				}, nil) // user gets new tokens
 			},
-			expectedStatusCode:  http.StatusOK,
-			expectedRequestBody: "88",
+			expectedStatusCode:   http.StatusOK,
+			expectedResponseBody: "88",
 		},
 		{
 			name:        "Invalid tokens",
@@ -76,8 +80,8 @@ func TestController_IdentifyUser(t *testing.T) {
 					fmt.Errorf("token is malformed: could not base64 decode header: illegal base64 data at input byte 36"),
 				)
 			},
-			expectedStatusCode:  http.StatusUnauthorized,
-			expectedRequestBody: "{\"error\":\"token is malformed: could not base64 decode header: illegal base64 data at input byte 36\"}\n",
+			expectedStatusCode:   http.StatusUnauthorized,
+			expectedResponseBody: "{\"error\":\"token is malformed: could not base64 decode header: illegal base64 data at input byte 36\"}\n",
 		},
 		{
 			name:        "Access token out of date but there is no refresh token",
@@ -97,24 +101,24 @@ func TestController_IdentifyUser(t *testing.T) {
 					fmt.Errorf("token is malformed: token contains an invalid number of segments"),
 				)
 			},
-			expectedStatusCode:  http.StatusBadRequest,
-			expectedRequestBody: "{\"error\":\"token expiration date has passed\"}\n",
+			expectedStatusCode:   http.StatusBadRequest,
+			expectedResponseBody: "{\"error\":\"token expiration date has passed\"}\n",
 		},
 		{
-			name:                "No auth header",
-			cookieName:          "refreshToken",
-			tokens:              model.Tokens{},
-			mockBehavior:        func(s *mock_service.MockAuthService, tokens *model.Tokens) {},
-			expectedStatusCode:  http.StatusUnauthorized,
-			expectedRequestBody: "{\"error\":\"invalid authorization header\"}\n",
+			name:                 "No auth header",
+			cookieName:           "refreshToken",
+			tokens:               model.Tokens{},
+			mockBehavior:         func(s *mock_service.MockAuthService, tokens *model.Tokens) {},
+			expectedStatusCode:   http.StatusUnauthorized,
+			expectedResponseBody: "{\"error\":\"invalid authorization header\"}\n",
 		},
 	}
-	for _, testCase := range testTable {
-		t.Run(testCase.name, func(t *testing.T) {
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
 			c := gomock.NewController(t)
 			defer c.Finish()
 			auth := mock_service.NewMockAuthService(c)
-			testCase.mockBehavior(auth, &testCase.tokens)
+			tc.mockBehavior(auth, &tc.tokens)
 			services := &service.Service{AuthService: auth}
 			handler := &authHandler{service: services}
 			router := mux.NewRouter()
@@ -127,18 +131,18 @@ func TestController_IdentifyUser(t *testing.T) {
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/auth", nil)
 			http.SetCookie(w, &http.Cookie{
-				Name:     testCase.cookieName,
-				Value:    testCase.cookieValue,
+				Name:     tc.cookieName,
+				Value:    tc.cookieValue,
 				Path:     "/auth",
 				MaxAge:   cookieMaxAge,
 				HttpOnly: true,
 			})
-			req.Header.Add(testCase.headerName, testCase.headerValue)
+			req.Header.Add(tc.headerName, tc.headerValue)
 			cookieHeader := fmt.Sprintf("%s=%s", w.Result().Cookies()[0].Name, w.Result().Cookies()[0].Value)
 			req.Header.Add("Cookie", cookieHeader)
 			router.ServeHTTP(w, req)
-			assert.Equal(t, testCase.expectedStatusCode, w.Code)
-			assert.Equal(t, testCase.expectedRequestBody, w.Body.String())
+			assert.Equal(t, tc.expectedStatusCode, w.Code)
+			assert.Equal(t, tc.expectedResponseBody, w.Body.String())
 		})
 	}
 }
