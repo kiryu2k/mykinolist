@@ -157,8 +157,11 @@ func (s *authService) ParseAccessToken(tokenStr string) (int64, error) {
 	if !ok {
 		return 0, err
 	}
-	if !token.Valid {
+	if claims.ExpiresAt.Time.Sub(time.Now()) < 0 {
 		return claims.UserID, &model.TokenError{Message: "token expiration date has passed"}
+	}
+	if !token.Valid {
+		return 0, err
 	}
 	return claims.UserID, nil
 }
@@ -167,6 +170,9 @@ func (s *authService) ParseRefreshToken(tokenStr string) (int64, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &model.Payload{}, func(token *jwt.Token) (any, error) {
 		return []byte(s.cfg.JWTRefreshSecretKey), nil
 	})
+	if err != nil {
+		return 0, err
+	}
 	claims, ok := token.Claims.(*model.Payload)
 	if !ok || !token.Valid {
 		return 0, err

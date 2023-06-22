@@ -32,10 +32,8 @@ func TestController_IdentifyUser(t *testing.T) {
 			headerName:  "Authorization",
 			headerValue: "Bearer sOmEt0kee3N",
 			cookieName:  "refreshToken",
-			cookieValue: "REFRESHREFRESHtttoken",
 			tokens: model.Tokens{
-				AccessToken:  "sOmEt0kee3N",
-				RefreshToken: "REFRESHREFRESHtttoken",
+				AccessToken: "sOmEt0kee3N",
 			},
 			mockBehavior: func(s *mock_service.MockAuthService, tokens *model.Tokens) {
 				s.EXPECT().ParseAccessToken(tokens.AccessToken).Return(int64(666), nil)
@@ -44,13 +42,13 @@ func TestController_IdentifyUser(t *testing.T) {
 			expectedRequestBody: "666",
 		},
 		{
-			name:        "Only valid refresh token",
+			name:        "Access token out of date",
 			headerName:  "Authorization",
-			headerValue: "Bearer ImInvalidToken",
+			headerValue: "Bearer tokenOutOfDate",
 			cookieName:  "refreshToken",
 			cookieValue: "ImValidToken",
 			tokens: model.Tokens{
-				AccessToken:  "ImInvalidToken",
+				AccessToken:  "tokenOutOfDate",
 				RefreshToken: "ImValidToken",
 			},
 			mockBehavior: func(s *mock_service.MockAuthService, tokens *model.Tokens) {
@@ -63,6 +61,41 @@ func TestController_IdentifyUser(t *testing.T) {
 			},
 			expectedStatusCode:  http.StatusOK,
 			expectedRequestBody: "88",
+		},
+		{
+			name:        "Invalid tokens",
+			headerName:  "Authorization",
+			headerValue: "Bearer invalidToken",
+			cookieName:  "refreshToken",
+			tokens: model.Tokens{
+				AccessToken: "invalidToken",
+			},
+			mockBehavior: func(s *mock_service.MockAuthService, tokens *model.Tokens) {
+				s.EXPECT().ParseAccessToken(tokens.AccessToken).Return(
+					int64(0),
+					fmt.Errorf("token is malformed: could not base64 decode header: illegal base64 data at input byte 36"),
+				)
+			},
+			expectedStatusCode:  http.StatusUnauthorized,
+			expectedRequestBody: "{\"error\":\"token is malformed: could not base64 decode header: illegal base64 data at input byte 36\"}\n",
+		},
+		{
+			name:        "Access token out of date but there is no refresh token",
+			headerName:  "Authorization",
+			headerValue: "Bearer tokenOutOfDate",
+			cookieName:  "refreshToken",
+			tokens: model.Tokens{
+				AccessToken: "tokenOutOfDate",
+			},
+			mockBehavior: func(s *mock_service.MockAuthService, tokens *model.Tokens) {
+				var id int64 = 88
+				s.EXPECT().ParseAccessToken(tokens.AccessToken).Return(
+					id, fmt.Errorf("token expiration date has passed"),
+				)
+				s.EXPECT().ParseRefreshToken(tokens.RefreshToken).Return(int64(0), fmt.Errorf("token is malformed: token contains an invalid number of segments"))
+			},
+			expectedStatusCode:  http.StatusBadRequest,
+			expectedRequestBody: "{\"error\":\"token expiration date has passed\"}\n",
 		},
 	}
 	for _, testCase := range testTable {
