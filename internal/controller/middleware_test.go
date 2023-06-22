@@ -92,10 +92,21 @@ func TestController_IdentifyUser(t *testing.T) {
 				s.EXPECT().ParseAccessToken(tokens.AccessToken).Return(
 					id, fmt.Errorf("token expiration date has passed"),
 				)
-				s.EXPECT().ParseRefreshToken(tokens.RefreshToken).Return(int64(0), fmt.Errorf("token is malformed: token contains an invalid number of segments"))
+				s.EXPECT().ParseRefreshToken(tokens.RefreshToken).Return(
+					int64(0),
+					fmt.Errorf("token is malformed: token contains an invalid number of segments"),
+				)
 			},
 			expectedStatusCode:  http.StatusBadRequest,
 			expectedRequestBody: "{\"error\":\"token expiration date has passed\"}\n",
+		},
+		{
+			name:                "No auth header",
+			cookieName:          "refreshToken",
+			tokens:              model.Tokens{},
+			mockBehavior:        func(s *mock_service.MockAuthService, tokens *model.Tokens) {},
+			expectedStatusCode:  http.StatusUnauthorized,
+			expectedRequestBody: "{\"error\":\"invalid authorization header\"}\n",
 		},
 	}
 	for _, testCase := range testTable {
