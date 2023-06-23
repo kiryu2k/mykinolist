@@ -17,13 +17,19 @@ func New(auth service.AuthService, list service.ListService) *mux.Router {
 		userRouter  = router.PathPrefix("/user").Subrouter()
 		listRouter  = router.PathPrefix("/list").Subrouter()
 	)
-	authRouter.HandleFunc("/signup", authHandler.signUp).Methods(http.MethodPost)
-	authRouter.HandleFunc("/signin", authHandler.signIn).Methods(http.MethodPost)
-	authRouter.HandleFunc("/signout", authHandler.signOut).Methods(http.MethodPost)
-	userRouter.Use(middleware.identifyUser)
-	userRouter.HandleFunc("/{id:[0-9]+}", authHandler.getUser).Methods(http.MethodGet)
-	userRouter.HandleFunc("/{id:[0-9]+}", authHandler.deleteUser).Methods(http.MethodDelete)
-	listRouter.Use(middleware.identifyUser)
-	listRouter.HandleFunc("", listHandler.addMovie).Methods(http.MethodPost)
+	{
+		authRouter.HandleFunc("/signup", authHandler.signUp).Methods(http.MethodPost)
+		authRouter.HandleFunc("/signin", authHandler.signIn).Methods(http.MethodPost)
+		authRouter.HandleFunc("/signout", authHandler.signOut).Methods(http.MethodPost)
+	}
+	{
+		userRouter.Use(middleware.identifyUser)
+		userRouter.HandleFunc("/{id:[0-9]+}", authHandler.getUser).Methods(http.MethodGet)
+		userRouter.HandleFunc("/{id:[0-9]+}", authHandler.deleteUser).Methods(http.MethodDelete)
+	}
+	{
+		listRouter.Use(middleware.identifyUser)
+		listRouter.HandleFunc("", listHandler.addMovie).Methods(http.MethodPost)
+	}
 	return router
 }

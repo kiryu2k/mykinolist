@@ -157,7 +157,7 @@ func (s *authService) ParseAccessToken(tokenStr string) (int64, error) {
 	if !ok {
 		return 0, err
 	}
-	if claims.ExpiresAt.Time.Sub(time.Now()) < 0 {
+	if time.Until(claims.ExpiresAt.Time) < 0 {
 		return claims.UserID, &model.TokenError{Message: "token expiration date has passed"}
 	}
 	if !token.Valid {
