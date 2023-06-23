@@ -7,10 +7,10 @@ import (
 	"github.com/kiryu-dev/mykinolist/internal/service"
 )
 
-func New(auth service.AuthService) *mux.Router {
+func New(auth service.AuthService, list service.ListService) *mux.Router {
 	router := mux.NewRouter()
 	initAuthRoutes(router.PathPrefix("/auth").Subrouter(), auth)
-	// InitListRoutes(router.PathPrefix("/list").Subrouter(), list)
+	initListRoutes(router.PathPrefix("/list").Subrouter(), list, auth)
 	return router
 }
 
@@ -24,4 +24,11 @@ func initAuthRoutes(router *mux.Router, s service.AuthService) {
 	userRouter.HandleFunc("/{id:[0-9]+}", handler.getUser).Methods(http.MethodGet)
 	userRouter.HandleFunc("/{id:[0-9]+}", handler.deleteUser).Methods(http.MethodDelete)
 	userRouter.Use(handler.identifyUser)
+}
+
+func initListRoutes(router *mux.Router, list service.ListService, auth service.AuthService) {
+	listHandler := &listHandler{service: list}
+	authHandler := &authHandler{service: auth}
+	router.HandleFunc("/", listHandler.addMovie).Methods(http.MethodPost)
+	router.Use(authHandler.identifyUser)
 }

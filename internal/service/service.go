@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+
 	"github.com/kiryu-dev/mykinolist/internal/config"
 	"github.com/kiryu-dev/mykinolist/internal/model"
 )
@@ -18,13 +20,18 @@ type AuthService interface {
 	Delete(int64) (*model.User, error)
 }
 
+type ListService interface {
+	AddMovie(context.Context, *model.Movie) error
+}
+
 type Service struct {
 	AuthService
-	// ListService
+	ListService
 }
 
 func New(user UserRepository, token TokenRepository, config *config.Config) *Service {
 	return &Service{
 		AuthService: &authService{user, token, config},
+		ListService: &listService{},
 	}
 }
