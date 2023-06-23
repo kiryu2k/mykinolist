@@ -119,17 +119,21 @@ func TestController_IdentifyUser(t *testing.T) {
 			defer c.Finish()
 			auth := mock_service.NewMockAuthService(c)
 			tc.mockBehavior(auth, &tc.tokens)
-			services := &service.Service{AuthService: auth}
-			handler := &authHandler{service: services}
-			router := mux.NewRouter()
-			router.Use(handler.identifyUser)
+			var (
+				service    = &service.Service{AuthService: auth}
+				middleware = &authMiddleware{service: service}
+				router     = mux.NewRouter()
+			)
+			router.Use(middleware.identifyUser)
 			router.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
 				id := r.Context().Value(userIDKey{}).(int64)
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(fmt.Sprintf("%d", id)))
 			}).Methods(http.MethodGet)
-			w := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodGet, "/auth", nil)
+			var (
+				w   = httptest.NewRecorder()
+				req = httptest.NewRequest(http.MethodGet, "/auth", nil)
+			)
 			http.SetCookie(w, &http.Cookie{
 				Name:     tc.cookieName,
 				Value:    tc.cookieValue,

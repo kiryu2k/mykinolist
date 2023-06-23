@@ -76,12 +76,16 @@ func TestController_signUp(t *testing.T) {
 			defer c.Finish()
 			auth := mock_service.NewMockAuthService(c)
 			tc.mockBehavior(auth, &tc.inputUser)
-			services := &service.Service{AuthService: auth}
-			handler := &authHandler{service: services}
-			router := mux.NewRouter()
+			var (
+				services = &service.Service{AuthService: auth}
+				handler  = &authHandler{service: services}
+				router   = mux.NewRouter()
+			)
 			router.HandleFunc("/signup", handler.signUp).Methods(http.MethodPost)
-			w := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodPost, "/signup", bytes.NewBufferString(tc.inputBody))
+			var (
+				w   = httptest.NewRecorder()
+				req = httptest.NewRequest(http.MethodPost, "/signup", bytes.NewBufferString(tc.inputBody))
+			)
 			router.ServeHTTP(w, req)
 			assert.Equal(t, tc.expectedStatusCode, w.Code)
 			assert.Equal(t, tc.expectedResponseBody, w.Body.String())
@@ -144,12 +148,16 @@ func TestController_signIn(t *testing.T) {
 			defer c.Finish()
 			auth := mock_service.NewMockAuthService(c)
 			tc.mockBehavior(auth, &tc.inputUser)
-			services := &service.Service{AuthService: auth}
-			handler := &authHandler{service: services}
-			router := mux.NewRouter()
+			var (
+				services = &service.Service{AuthService: auth}
+				handler  = &authHandler{service: services}
+				router   = mux.NewRouter()
+			)
 			router.HandleFunc("/signin", handler.signIn).Methods(http.MethodPost)
-			w := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodPost, "/signin", bytes.NewBufferString(tc.inputBody))
+			var (
+				w   = httptest.NewRecorder()
+				req = httptest.NewRequest(http.MethodPost, "/signin", bytes.NewBufferString(tc.inputBody))
+			)
 			router.ServeHTTP(w, req)
 			assert.Equal(t, tc.expectedStatusCode, w.Code)
 			assert.Equal(t, tc.expectedResponseBody, w.Body.String())

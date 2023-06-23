@@ -8,27 +8,22 @@ import (
 )
 
 func New(auth service.AuthService, list service.ListService) *mux.Router {
-	router := mux.NewRouter()
-	initAuthRoutes(router.PathPrefix("/auth").Subrouter(), auth)
-	initListRoutes(router.PathPrefix("/list").Subrouter(), list, auth)
+	var (
+		router      = mux.NewRouter()
+		authHandler = &authHandler{service: auth}
+		listHandler = &listHandler{service: list}
+		middleware  = &authMiddleware{service: auth}
+		authRouter  = router.PathPrefix("/auth").Subrouter()
+		userRouter  = router.PathPrefix("/user").Subrouter()
+		listRouter  = router.PathPrefix("/list").Subrouter()
+	)
+	authRouter.HandleFunc("/signup", authHandler.signUp).Methods(http.MethodPost)
+	authRouter.HandleFunc("/signin", authHandler.signIn).Methods(http.MethodPost)
+	authRouter.HandleFunc("/signout", authHandler.signOut).Methods(http.MethodPost)
+	userRouter.Use(middleware.identifyUser)
+	userRouter.HandleFunc("/{id:[0-9]+}", authHandler.getUser).Methods(http.MethodGet)
+	userRouter.HandleFunc("/{id:[0-9]+}", authHandler.deleteUser).Methods(http.MethodDelete)
+	listRouter.Use(middleware.identifyUser)
+	listRouter.HandleFunc("", listHandler.addMovie).Methods(http.MethodPost)
 	return router
-}
-
-func initAuthRoutes(router *mux.Router, s service.AuthService) {
-	handler := &authHandler{service: s}
-	postRouter := router.Methods(http.MethodPost).Subrouter()
-	postRouter.HandleFunc("/signup", handler.signUp)
-	postRouter.HandleFunc("/signin", handler.signIn)
-	postRouter.HandleFunc("/signout", handler.signOut)
-	userRouter := router.PathPrefix("/user").Subrouter()
-	userRouter.HandleFunc("/{id:[0-9]+}", handler.getUser).Methods(http.MethodGet)
-	userRouter.HandleFunc("/{id:[0-9]+}", handler.deleteUser).Methods(http.MethodDelete)
-	userRouter.Use(handler.identifyUser)
-}
-
-func initListRoutes(router *mux.Router, list service.ListService, auth service.AuthService) {
-	listHandler := &listHandler{service: list}
-	authHandler := &authHandler{service: auth}
-	router.HandleFunc("/", listHandler.addMovie).Methods(http.MethodPost)
-	router.Use(authHandler.identifyUser)
 }

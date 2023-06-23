@@ -24,8 +24,7 @@ type authHandler struct {
 func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 	req := new(model.SignUpUserDTO)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusBadRequest, resp)
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	defer r.Body.Close()
@@ -33,8 +32,7 @@ func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 	id, err := h.service.SignUp(req)
 	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
-		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusBadRequest, resp)
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	writeJSONResponse(w, http.StatusOK, map[string]int64{"id": id})
@@ -43,8 +41,7 @@ func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
 	req := new(model.SignInUserDTO)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusBadRequest, resp)
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	defer r.Body.Close()
@@ -52,8 +49,7 @@ func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
 	tokens, err := h.service.SignIn(req)
 	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
-		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusBadRequest, resp)
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	w.Header().Add("Authorization", fmt.Sprintf("Bearer %s", tokens.AccessToken))
@@ -70,13 +66,11 @@ func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
 func (h *authHandler) signOut(w http.ResponseWriter, r *http.Request) {
 	refreshToken, err := r.Cookie("refreshToken")
 	if err != nil {
-		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusBadRequest, resp)
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	if err := h.service.SignOut(refreshToken.Value); err != nil {
-		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusBadRequest, resp)
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	removeRefreshTokenCookie(w)
@@ -87,22 +81,19 @@ func (h *authHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusBadRequest, resp)
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	idFromCtx := r.Context().Value(userIDKey{}).(int64)
 	if id != idFromCtx {
-		resp := &errorResponse{"cannot get other's account info"}
-		writeJSONResponse(w, http.StatusForbidden, resp)
+		writeErrorJSON(w, http.StatusForbidden, "cannot get other's account info")
 		return
 	}
 	startTime := time.Now()
 	user, err := h.service.GetUser(id)
 	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
-		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusInternalServerError, resp)
+		writeErrorJSON(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	writeJSONResponse(w, http.StatusOK, user)
@@ -112,22 +103,19 @@ func (h *authHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusBadRequest, resp)
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	idFromCtx := r.Context().Value(userIDKey{}).(int64)
 	if id != idFromCtx {
-		resp := &errorResponse{"cannot delete someone else's account"}
-		writeJSONResponse(w, http.StatusForbidden, resp)
+		writeErrorJSON(w, http.StatusForbidden, "cannot delete someone else's account")
 		return
 	}
 	startTime := time.Now()
 	user, err := h.service.Delete(id)
 	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
-		resp := &errorResponse{err.Error()}
-		writeJSONResponse(w, http.StatusBadRequest, resp)
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	writeJSONResponse(w, http.StatusOK, user)
