@@ -178,7 +178,7 @@ func (m *MockListService) EXPECT() *MockListServiceMockRecorder {
 }
 
 // AddMovie mocks base method.
-func (m *MockListService) AddMovie(arg0 context.Context, arg1 *model.Movie) error {
+func (m *MockListService) AddMovie(arg0 context.Context, arg1 *model.ListUnit) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddMovie", arg0, arg1)
 	ret0, _ := ret[0].(error)

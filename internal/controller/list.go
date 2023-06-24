@@ -17,8 +17,12 @@ type listHandler struct {
 
 func (h *listHandler) addMovie(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(userIDKey{}).(int64)
-	req := new(model.Movie)
+	req := new(model.ListUnit)
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := req.Validate(); err != nil {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -29,5 +33,5 @@ func (h *listHandler) addMovie(w http.ResponseWriter, r *http.Request) {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	w.Write([]byte(fmt.Sprintf("Movie %s has successfully added to user's %d list", req.Title, id)))
+	w.Write([]byte(fmt.Sprintf("Movie %s has successfully added to user's %d list", req.Name, id)))
 }

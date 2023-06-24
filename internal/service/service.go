@@ -21,7 +21,7 @@ type AuthService interface {
 }
 
 type ListService interface {
-	AddMovie(context.Context, *model.Movie) error
+	AddMovie(context.Context, *model.ListUnit) error
 }
 
 type Service struct {

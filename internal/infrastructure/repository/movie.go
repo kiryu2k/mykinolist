@@ -12,13 +12,14 @@ type movieRepository struct {
 	db *sql.DB
 }
 
-func (r *movieRepository) Add(ctx context.Context, movie *model.Movie) error {
+func (r *movieRepository) Add(ctx context.Context, movie *model.ListUnit) error {
 	query := `
-INSERT INTO list_titles (list_id, title, status_id, score, is_favorite)
-VALUES ($1, $2, $3, $4, $5);
+INSERT INTO list_titles (list_id, title_id, status_id, score, is_favorite)
+SELECT id, $1, $2, $3, $4
+FROM lists WHERE id = $5;
 	`
-	res, err := r.db.ExecContext(ctx, query, movie.ListID, movie.Title, movie.Status,
-		movie.Score, movie.IsFavorite)
+	res, err := r.db.ExecContext(ctx, query, movie.ID, movie.Status,
+		movie.Score, movie.IsFavorite, movie.OwnerID)
 	if err != nil {
 		return err
 	}

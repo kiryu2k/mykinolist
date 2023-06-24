@@ -17,17 +17,18 @@ type MovieSearcher interface {
 }
 
 type MovieRepositroy interface {
-	Add(context.Context, *model.Movie) error
+	Add(context.Context, *model.ListUnit) error
 }
 
-func (s *listService) AddMovie(ctx context.Context, movie *model.Movie) error {
-	if len(movie.Title) == 0 {
+/* Add the first found movie by the specified title to the [kino]list */
+func (s *listService) AddMovie(ctx context.Context, movie *model.ListUnit) error {
+	if len(movie.Name) == 0 {
 		return fmt.Errorf("empty movie name")
 	}
-	searchResult, err := s.searcher.Search(ctx, movie.Title)
+	searchResult, err := s.searcher.Search(ctx, movie.Name)
 	if err != nil {
 		return err
 	}
-	movie.Title = searchResult.Docs[0].Name
+	movie.Movie = searchResult.Docs[0]
 	return s.repo.Add(ctx, movie)
 }
