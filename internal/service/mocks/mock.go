@@ -5,6 +5,7 @@
 package mock_service
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -124,10 +125,10 @@ func (mr *MockAuthServiceMockRecorder) SignOut(arg0 interface{}) *gomock.Call {
 }
 
 // SignUp mocks base method.
-func (m *MockAuthService) SignUp(arg0 *model.SignUpUserDTO) (int64, error) {
+func (m *MockAuthService) SignUp(arg0 *model.SignUpUserDTO) (*model.List, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SignUp", arg0)
-	ret0, _ := ret[0].(int64)
+	ret0, _ := ret[0].(*model.List)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -151,4 +152,41 @@ func (m *MockAuthService) UpdateTokens(arg0 int64) (*model.Tokens, error) {
 func (mr *MockAuthServiceMockRecorder) UpdateTokens(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTokens", reflect.TypeOf((*MockAuthService)(nil).UpdateTokens), arg0)
+}
+
+// MockListService is a mock of ListService interface.
+type MockListService struct {
+	ctrl     *gomock.Controller
+	recorder *MockListServiceMockRecorder
+}
+
+// MockListServiceMockRecorder is the mock recorder for MockListService.
+type MockListServiceMockRecorder struct {
+	mock *MockListService
+}
+
+// NewMockListService creates a new mock instance.
+func NewMockListService(ctrl *gomock.Controller) *MockListService {
+	mock := &MockListService{ctrl: ctrl}
+	mock.recorder = &MockListServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockListService) EXPECT() *MockListServiceMockRecorder {
+	return m.recorder
+}
+
+// AddMovie mocks base method.
+func (m *MockListService) AddMovie(arg0 context.Context, arg1 *model.Movie) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMovie", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddMovie indicates an expected call of AddMovie.
+func (mr *MockListServiceMockRecorder) AddMovie(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMovie", reflect.TypeOf((*MockListService)(nil).AddMovie), arg0, arg1)
 }

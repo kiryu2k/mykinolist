@@ -35,18 +35,20 @@ func TestController_signUp(t *testing.T) {
 				Password: "qweRty2023",
 			},
 			mockBehavior: func(s *mock_service.MockAuthService, userDTO *model.SignUpUserDTO) {
-				s.EXPECT().SignUp(userDTO).Return(int64(1), nil)
+				s.EXPECT().SignUp(userDTO).Return(&model.List{
+					ListID:  666,
+					OwnerID: 1488,
+				}, nil)
 			},
 			expectedStatusCode:   http.StatusOK,
-			expectedResponseBody: "{\"id\":1}\n",
+			expectedResponseBody: "{\"list_id\":666,\"user_id\":1488}\n",
 		},
 		{
 			name:      "Empty fields",
 			inputBody: `{"username":"","email":"","password":""}`,
 			inputUser: model.SignUpUserDTO{},
 			mockBehavior: func(s *mock_service.MockAuthService, userDTO *model.SignUpUserDTO) {
-				s.EXPECT().SignUp(userDTO).Return(
-					int64(0),
+				s.EXPECT().SignUp(userDTO).Return(nil,
 					fmt.Errorf("username must consist of letters or numbers, also it must contain from 6 to 50 characters"),
 				)
 			},
@@ -61,8 +63,7 @@ func TestController_signUp(t *testing.T) {
 				Password: "qweRty2023",
 			},
 			mockBehavior: func(s *mock_service.MockAuthService, userDTO *model.SignUpUserDTO) {
-				s.EXPECT().SignUp(userDTO).Return(
-					int64(0),
+				s.EXPECT().SignUp(userDTO).Return(nil,
 					fmt.Errorf("email must consist of letters and numbers, also it mustn't exceed 100 characters"),
 				)
 			},
@@ -133,8 +134,7 @@ func TestController_signIn(t *testing.T) {
 				Email: "testUserMail@yahoo.com",
 			},
 			mockBehavior: func(s *mock_service.MockAuthService, userDTO *model.SignInUserDTO) {
-				s.EXPECT().SignIn(userDTO).Return(
-					nil,
+				s.EXPECT().SignIn(userDTO).Return(nil,
 					fmt.Errorf("password must contain from 8 to 30 characters, be at least one uppercase letter, one lowercase letter and one number"))
 			},
 			expectedStatusCode:     http.StatusBadRequest,

@@ -29,13 +29,13 @@ func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	startTime := time.Now()
-	id, err := h.service.SignUp(req)
+	list, err := h.service.SignUp(req)
 	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	writeJSONResponse(w, http.StatusOK, map[string]int64{"id": id})
+	writeJSONResponse(w, http.StatusOK, list)
 }
 
 func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {

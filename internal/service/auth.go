@@ -20,6 +20,7 @@ const (
 type authService struct {
 	user  UserRepository
 	token TokenRepository
+	list  ListRepository
 	cfg   *config.Config
 }
 
@@ -36,15 +37,19 @@ type TokenRepository interface {
 	Remove(context.Context, string) error
 }
 
-func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (int64, error) {
+type ListRepository interface {
+	Create(context.Context, int64) (*model.List, error)
+}
+
+func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.List, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := userDTO.Validate(); err != nil {
-		return 0, err
+		return nil, err
 	}
 	HashedPassword, err := bcrypt.GenerateFromPassword([]byte(userDTO.Password), bcrypt.MinCost)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	user := &model.User{
 		Username:       userDTO.Username,
@@ -54,9 +59,9 @@ func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (int64, error) {
 		LastLogin:      time.Now(),
 	}
 	if err := s.user.CreateAccount(ctx, user); err != nil {
-		return 0, err
+		return nil, err
 	}
-	return user.ID, nil
+	return s.list.Create(ctx, user.ID)
 }
 
 func (s *authService) SignIn(userDTO *model.SignInUserDTO) (*model.Tokens, error) {
