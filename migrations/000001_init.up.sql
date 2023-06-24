@@ -19,7 +19,7 @@ CREATE TABLE title_status (
 
 CREATE TABLE list_titles (
     list_id SERIAL REFERENCES lists (id) ON DELETE CASCADE,
-    title VARCHAR(100) NOT NULL,
+    title_id SERIAL NOT NULL,
     status_id SERIAL REFERENCES title_status (id) ON DELETE CASCADE,
     score SERIAL CHECK (score BETWEEN 0 AND 10),
     is_favorite BOOLEAN NOT NULL
