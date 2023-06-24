@@ -20,6 +20,7 @@ type Config struct {
 	ListeningPort       string
 	JWTAccessSecretKey  string
 	JWTRefreshSecretKey string
+	KinopoiskAPIKey     string
 	DB                  *DBConfig
 }
 
@@ -35,6 +36,7 @@ func LoadConfig(configPath string) (*Config, error) {
 		ListeningPort:       viper.GetString("port"),
 		JWTAccessSecretKey:  os.Getenv("JWT_ACCESS_SECRET_KEY"),
 		JWTRefreshSecretKey: os.Getenv("JWT_REFRESH_SECRET_KEY"),
+		KinopoiskAPIKey:     os.Getenv("KINOPOISK_API_KEY"),
 		DB: &DBConfig{
 			Host:     viper.GetString("db.host"),
 			Port:     viper.GetString("db.port"),
