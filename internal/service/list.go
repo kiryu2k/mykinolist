@@ -21,7 +21,9 @@ type MovieSearcher interface {
 type MovieRepositroy interface {
 	Add(context.Context, *model.ListUnit) error
 	GetAll(context.Context, int64) ([]*model.ListUnit, error)
+	GetByID(context.Context, *model.ListUnit) error
 	Update(context.Context, *model.ListUnitPatch) error
+	Delete(context.Context, *model.ListUnit) error
 }
 
 /* Add the first found movie by the specified title to the [kino]list */
@@ -62,4 +64,20 @@ func (s *listService) UpdateMovie(ctx context.Context, movie *model.ListUnitPatc
 	}
 	movie.ListID = &listID
 	return s.movie.Update(ctx, movie)
+}
+
+// TODO: goroutines
+func (s *listService) DeleteMovie(ctx context.Context, movie *model.ListUnit) error {
+	if err := s.movie.GetByID(ctx, movie); err != nil {
+		return err
+	}
+	if err := s.movie.Delete(ctx, movie); err != nil {
+		return err
+	}
+	movieInfo, err := s.searcher.SearchByID(ctx, movie.ID)
+	if err != nil {
+		return err
+	}
+	movie.Name = movieInfo.Name
+	return nil
 }

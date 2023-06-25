@@ -24,6 +24,7 @@ type ListService interface {
 	AddMovie(context.Context, *model.ListUnit) error
 	GetMovies(context.Context, int64) ([]*model.ListUnit, error)
 	UpdateMovie(context.Context, *model.ListUnitPatch) error
+	DeleteMovie(context.Context, *model.ListUnit) error
 }
 
 type Service struct {

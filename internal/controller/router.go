@@ -32,6 +32,7 @@ func New(auth service.AuthService, list service.ListService) *mux.Router {
 		listRouter.HandleFunc("", listHandler.addMovie).Methods(http.MethodPost)
 		listRouter.HandleFunc("", listHandler.getMovies).Methods(http.MethodGet)
 		listRouter.HandleFunc("/{id:[0-9]+}", listHandler.updateMovie).Methods(http.MethodPatch)
+		listRouter.HandleFunc("/{id:[0-9]+}", listHandler.deleteMovie).Methods(http.MethodDelete)
 	}
 	return router
 }

@@ -24,6 +24,7 @@ func (h *listHandler) addMovie(w http.ResponseWriter, r *http.Request) {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	r.Body.Close()
 	if err := req.Validate(); err != nil {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
@@ -63,6 +64,7 @@ func (h *listHandler) updateMovie(w http.ResponseWriter, r *http.Request) {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	defer r.Body.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	req.OwnerID = &userID
@@ -72,4 +74,25 @@ func (h *listHandler) updateMovie(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write([]byte("movie data has been updated"))
+}
+
+func (h *listHandler) deleteMovie(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(userIDKey{}).(int64)
+	idStr := mux.Vars(r)["id"]
+	movieID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	req := &model.ListUnit{
+		Movie:    model.Movie{ID: movieID},
+		ListInfo: model.ListInfo{OwnerID: userID},
+	}
+	if err := h.service.DeleteMovie(ctx, req); err != nil {
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSONResponse(w, http.StatusOK, req)
 }
