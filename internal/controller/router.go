@@ -30,6 +30,7 @@ func New(auth service.AuthService, list service.ListService) *mux.Router {
 	{
 		listRouter.Use(middleware.identifyUser)
 		listRouter.HandleFunc("", listHandler.addMovie).Methods(http.MethodPost)
+		listRouter.HandleFunc("", listHandler.getMovies).Methods(http.MethodGet)
 	}
 	return router
 }

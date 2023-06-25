@@ -10,7 +10,7 @@ import (
 //go:generate mockgen -source=service.go -destination=mocks/mock.go
 
 type AuthService interface {
-	SignUp(*model.SignUpUserDTO) (*model.List, error)
+	SignUp(*model.SignUpUserDTO) (*model.ListInfo, error)
 	SignIn(*model.SignInUserDTO) (*model.Tokens, error)
 	SignOut(string) error
 	GetUser(int64) (*model.User, error)
@@ -22,6 +22,7 @@ type AuthService interface {
 
 type ListService interface {
 	AddMovie(context.Context, *model.ListUnit) error
+	GetMovies(context.Context, int64) ([]*model.ListUnit, error)
 }
 
 type Service struct {

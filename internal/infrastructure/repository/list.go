@@ -11,8 +11,8 @@ type listRepository struct {
 	db *sql.DB
 }
 
-func (r *listRepository) Create(ctx context.Context, ownerID int64) (*model.List, error) {
-	list := new(model.List)
+func (r *listRepository) Create(ctx context.Context, ownerID int64) (*model.ListInfo, error) {
+	list := new(model.ListInfo)
 	list.OwnerID = ownerID
 	query := `INSERT INTO lists (owner_id) VALUES ($1) RETURNING id;`
 	err := r.db.QueryRowContext(ctx, query, ownerID).Scan(&list.ListID)

@@ -125,10 +125,10 @@ func (mr *MockAuthServiceMockRecorder) SignOut(arg0 interface{}) *gomock.Call {
 }
 
 // SignUp mocks base method.
-func (m *MockAuthService) SignUp(arg0 *model.SignUpUserDTO) (*model.List, error) {
+func (m *MockAuthService) SignUp(arg0 *model.SignUpUserDTO) (*model.ListInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SignUp", arg0)
-	ret0, _ := ret[0].(*model.List)
+	ret0, _ := ret[0].(*model.ListInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -189,4 +189,19 @@ func (m *MockListService) AddMovie(arg0 context.Context, arg1 *model.ListUnit) e
 func (mr *MockListServiceMockRecorder) AddMovie(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMovie", reflect.TypeOf((*MockListService)(nil).AddMovie), arg0, arg1)
+}
+
+// GetMovies mocks base method.
+func (m *MockListService) GetMovies(arg0 context.Context, arg1 int64) ([]*model.ListUnit, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMovies", arg0, arg1)
+	ret0, _ := ret[0].([]*model.ListUnit)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMovies indicates an expected call of GetMovies.
+func (mr *MockListServiceMockRecorder) GetMovies(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMovies", reflect.TypeOf((*MockListService)(nil).GetMovies), arg0, arg1)
 }

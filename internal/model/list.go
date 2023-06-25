@@ -1,16 +1,13 @@
 package model
 
-import "fmt"
-
-const (
-	Watching = iota + 1
-	Completed
-	OnHold
-	Dropped
-	PlanToWatch
+import (
+	"fmt"
+	"strings"
 )
 
-type List struct {
+var titleStatus = [...]string{"watching", "completed", "on-hold", "dropped", "plan to watch"}
+
+type ListInfo struct {
 	ListID  int64 `json:"list_id"`
 	OwnerID int64 `json:"user_id"`
 }
@@ -26,18 +23,21 @@ type Movie struct {
 
 type ListUnit struct {
 	Movie
-	Status     int   `json:"status_id"`
-	Score      uint8 `json:"score"`
-	IsFavorite bool  `json:"is_favorite"`
-	List       `json:"-"`
+	Status     string `json:"status"`
+	Score      uint8  `json:"score"`
+	IsFavorite bool   `json:"is_favorite"`
+	ListInfo   `json:"-"`
 }
 
 func (u *ListUnit) Validate() error {
 	if u.Score > 10 {
 		return fmt.Errorf("score cannot be greater than 10")
 	}
-	if u.Status < Watching || u.Status > PlanToWatch {
-		return fmt.Errorf("invalid title status")
+	for _, status := range titleStatus {
+		if strings.EqualFold(status, u.Status) {
+			u.Status = status
+			return nil
+		}
 	}
-	return nil
+	return fmt.Errorf("invalid title status")
 }

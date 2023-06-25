@@ -35,7 +35,7 @@ func TestController_signUp(t *testing.T) {
 				Password: "qweRty2023",
 			},
 			mockBehavior: func(s *mock_service.MockAuthService, userDTO *model.SignUpUserDTO) {
-				s.EXPECT().SignUp(userDTO).Return(&model.List{
+				s.EXPECT().SignUp(userDTO).Return(&model.ListInfo{
 					ListID:  666,
 					OwnerID: 1488,
 				}, nil)

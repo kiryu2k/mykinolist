@@ -35,3 +35,15 @@ func (h *listHandler) addMovie(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte(fmt.Sprintf("Movie %s has successfully added to user's %d list", req.Name, id)))
 }
+
+func (h *listHandler) getMovies(w http.ResponseWriter, r *http.Request) {
+	id := r.Context().Value(userIDKey{}).(int64)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	movies, err := h.service.GetMovies(ctx, id)
+	if err != nil {
+		writeErrorJSON(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSONResponse(w, http.StatusOK, movies)
+}

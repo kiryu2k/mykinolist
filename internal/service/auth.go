@@ -38,10 +38,10 @@ type TokenRepository interface {
 }
 
 type ListRepository interface {
-	Create(context.Context, int64) (*model.List, error)
+	Create(context.Context, int64) (*model.ListInfo, error)
 }
 
-func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.List, error) {
+func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.ListInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := userDTO.Validate(); err != nil {
