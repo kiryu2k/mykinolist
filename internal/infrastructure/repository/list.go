@@ -21,3 +21,13 @@ func (r *listRepository) Create(ctx context.Context, ownerID int64) (*model.List
 	}
 	return list, nil
 }
+
+func (r *listRepository) GetID(ctx context.Context, ownerID int64) (int64, error) {
+	query := `SELECT id FROM lists WHERE owner_id = $1;`
+	var id int64
+	err := r.db.QueryRowContext(ctx, query, ownerID).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}

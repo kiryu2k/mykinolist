@@ -39,6 +39,7 @@ type TokenRepository interface {
 
 type ListRepository interface {
 	Create(context.Context, int64) (*model.ListInfo, error)
+	GetID(context.Context, int64) (int64, error)
 }
 
 func (s *authService) SignUp(userDTO *model.SignUpUserDTO) (*model.ListInfo, error) {

@@ -56,3 +56,83 @@ ORDER BY is_favorite DESC, score DESC;
 	}
 	return movies, nil
 }
+
+func (r *movieRepository) Update(ctx context.Context, movie *model.ListUnitPatch) error {
+	var err error
+	if movie.Status != nil {
+		err = r.updateStatus(ctx, movie)
+	}
+	if err != nil {
+		return err
+	}
+	if movie.Score != nil {
+		err = r.updateScore(ctx, movie)
+	}
+	if err != nil {
+		return err
+	}
+	if movie.IsFavorite != nil {
+		err = r.updateIsFavoriteField(ctx, movie)
+	}
+	return err
+}
+
+func (r *movieRepository) updateStatus(ctx context.Context, movie *model.ListUnitPatch) error {
+	query := `
+UPDATE list_titles
+SET status_name = $1
+WHERE list_id = $2 AND title_id = $3;
+	`
+	res, err := r.db.ExecContext(ctx, query, movie.Status, movie.ListID, movie.MovieID)
+	if err != nil {
+		return err
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return fmt.Errorf("invalid count of updated titles %d", count)
+	}
+	return nil
+}
+
+func (r *movieRepository) updateScore(ctx context.Context, movie *model.ListUnitPatch) error {
+	query := `
+UPDATE list_titles
+SET score = $1
+WHERE list_id = $2 AND title_id = $3;
+	`
+	res, err := r.db.ExecContext(ctx, query, movie.Score, movie.ListID, movie.MovieID)
+	if err != nil {
+		return err
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return fmt.Errorf("invalid count of updated titles %d", count)
+	}
+	return nil
+}
+
+func (r *movieRepository) updateIsFavoriteField(ctx context.Context, movie *model.ListUnitPatch) error {
+	query := `
+UPDATE list_titles
+SET is_favorite = $1
+WHERE list_id = $2 AND title_id = $3;
+	`
+	res, err := r.db.ExecContext(ctx, query, movie.IsFavorite, movie.ListID, movie.MovieID)
+	if err != nil {
+		return err
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return fmt.Errorf("invalid count of updated titles %d", count)
+	}
+	return nil
+}

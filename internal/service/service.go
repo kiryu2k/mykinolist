@@ -23,6 +23,7 @@ type AuthService interface {
 type ListService interface {
 	AddMovie(context.Context, *model.ListUnit) error
 	GetMovies(context.Context, int64) ([]*model.ListUnit, error)
+	UpdateMovie(context.Context, *model.ListUnitPatch) error
 }
 
 type Service struct {
@@ -34,6 +35,6 @@ func New(user UserRepository, token TokenRepository, list ListRepository,
 	movie MovieRepositroy, searcher MovieSearcher, config *config.Config) *Service {
 	return &Service{
 		AuthService: &authService{user, token, list, config},
-		ListService: &listService{searcher, movie},
+		ListService: &listService{searcher, movie, list},
 	}
 }

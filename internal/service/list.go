@@ -9,7 +9,8 @@ import (
 
 type listService struct {
 	searcher MovieSearcher
-	repo     MovieRepositroy
+	movie    MovieRepositroy
+	list     ListRepository
 }
 
 type MovieSearcher interface {
@@ -20,6 +21,7 @@ type MovieSearcher interface {
 type MovieRepositroy interface {
 	Add(context.Context, *model.ListUnit) error
 	GetAll(context.Context, int64) ([]*model.ListUnit, error)
+	Update(context.Context, *model.ListUnitPatch) error
 }
 
 /* Add the first found movie by the specified title to the [kino]list */
@@ -32,11 +34,11 @@ func (s *listService) AddMovie(ctx context.Context, movie *model.ListUnit) error
 		return err
 	}
 	movie.Movie = searchResult.Docs[0]
-	return s.repo.Add(ctx, movie)
+	return s.movie.Add(ctx, movie)
 }
 
 func (s *listService) GetMovies(ctx context.Context, userID int64) ([]*model.ListUnit, error) {
-	movies, err := s.repo.GetAll(ctx, userID)
+	movies, err := s.movie.GetAll(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -48,4 +50,16 @@ func (s *listService) GetMovies(ctx context.Context, userID int64) ([]*model.Lis
 		movies[i].Name = movie.Name
 	}
 	return movies, nil
+}
+
+func (s *listService) UpdateMovie(ctx context.Context, movie *model.ListUnitPatch) error {
+	if err := movie.Validate(); err != nil {
+		return err
+	}
+	listID, err := s.list.GetID(ctx, *movie.OwnerID)
+	if err != nil {
+		return err
+	}
+	movie.ListID = &listID
+	return s.movie.Update(ctx, movie)
 }
