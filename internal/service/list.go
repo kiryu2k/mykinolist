@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/kiryu-dev/mykinolist/internal/model"
 )
@@ -27,7 +29,9 @@ type MovieRepositroy interface {
 }
 
 /* Add the first found movie by the specified title to the [kino]list */
-func (s *listService) AddMovie(ctx context.Context, movie *model.ListUnit) error {
+func (s *listService) AddMovie(movie *model.ListUnit) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	if len(movie.Name) == 0 {
 		return fmt.Errorf("empty movie name")
 	}
@@ -39,7 +43,9 @@ func (s *listService) AddMovie(ctx context.Context, movie *model.ListUnit) error
 	return s.movie.Add(ctx, movie)
 }
 
-func (s *listService) GetMovies(ctx context.Context, userID int64) ([]*model.ListUnit, error) {
+func (s *listService) GetMovies(userID int64) ([]*model.ListUnit, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	movies, err := s.movie.GetAll(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -54,7 +60,9 @@ func (s *listService) GetMovies(ctx context.Context, userID int64) ([]*model.Lis
 	return movies, nil
 }
 
-func (s *listService) UpdateMovie(ctx context.Context, movie *model.ListUnitPatch) error {
+func (s *listService) UpdateMovie(movie *model.ListUnitPatch) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	if err := movie.Validate(); err != nil {
 		return err
 	}
@@ -66,18 +74,32 @@ func (s *listService) UpdateMovie(ctx context.Context, movie *model.ListUnitPatc
 	return s.movie.Update(ctx, movie)
 }
 
-// TODO: goroutines
-func (s *listService) DeleteMovie(ctx context.Context, movie *model.ListUnit) error {
-	if err := s.movie.GetByID(ctx, movie); err != nil {
-		return err
+func (s *listService) DeleteMovie(movie *model.ListUnit) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var (
+		errChan = make(chan error, 2)
+		wg      = &sync.WaitGroup{}
+	)
+	wg.Add(2)
+	go func() {
+		errChan <- s.movie.GetByID(ctx, movie)
+		wg.Done()
+	}()
+	go func() {
+		movieInfo, err := s.searcher.SearchByID(ctx, movie.ID)
+		if err == nil {
+			movie.Name = movieInfo.Name
+		}
+		errChan <- err
+		wg.Done()
+	}()
+	wg.Wait()
+	close(errChan)
+	for err := range errChan {
+		if err != nil {
+			return err
+		}
 	}
-	if err := s.movie.Delete(ctx, movie); err != nil {
-		return err
-	}
-	movieInfo, err := s.searcher.SearchByID(ctx, movie.ID)
-	if err != nil {
-		return err
-	}
-	movie.Name = movieInfo.Name
-	return nil
+	return s.movie.Delete(ctx, movie)
 }
