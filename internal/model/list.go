@@ -29,6 +29,11 @@ type ListUnit struct {
 	ListInfo   `json:"-"`
 }
 
+/*
+couldn't think of anything else to implement the functionality
+of partial update (PATCH HTTP method) of the list_titles table fields..
+so, I had to duplicate the code of the structure, but with pointers
+*/
 type ListUnitPatch struct {
 	ListID     *int64  `json:"-"`
 	OwnerID    *int64  `json:"-"`
