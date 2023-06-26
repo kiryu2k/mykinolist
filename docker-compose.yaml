@@ -1,5 +1,26 @@
 version: "3.9"
 services:
+  mykinolist-api:
+    build: ./
+    command: make
+    environment:
+      DB_PASSWORD: qwerty
+      JWT_ACCESS_SECRET_KEY: SomeAccessTokenSecretKey
+      JWT_REFRESH_SECRET_KEY: SomeRefreshTokenSecretKey
+      KINOPOISK_API_KEY: # your secret kinopoisk api key
+    ports:
+      - "8080:8080"
+    depends_on:
+      - migrate
+  migrate:
+    image: migrate/migrate
+    depends_on:
+      postgres:
+        condition: service_started
+    volumes:
+      - ./migrations:/database
+    command:
+      [ "-path", "/database", "-database",  "postgres://kirrryu:qwerty@postgres:5432/mykinolist?sslmode=disable", "up" ]
   postgres:
     restart: always
     image: postgres
