@@ -1,12 +1,10 @@
 package controller
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/kiryu-dev/mykinolist/internal/model"
@@ -30,9 +28,7 @@ func (h *listHandler) addMovie(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.OwnerID = id
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := h.service.AddMovie(ctx, req); err != nil {
+	if err := h.service.AddMovie(req); err != nil {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -41,9 +37,7 @@ func (h *listHandler) addMovie(w http.ResponseWriter, r *http.Request) {
 
 func (h *listHandler) getMovies(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(userIDKey{}).(int64)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	movies, err := h.service.GetMovies(ctx, id)
+	movies, err := h.service.GetMovies(id)
 	if err != nil {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
@@ -65,11 +59,9 @@ func (h *listHandler) updateMovie(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 	req.OwnerID = &userID
 	req.MovieID = &movieID
-	if err := h.service.UpdateMovie(ctx, req); err != nil {
+	if err := h.service.UpdateMovie(req); err != nil {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -84,13 +76,11 @@ func (h *listHandler) deleteMovie(w http.ResponseWriter, r *http.Request) {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 	req := &model.ListUnit{
 		Movie:    model.Movie{ID: movieID},
 		ListInfo: model.ListInfo{OwnerID: userID},
 	}
-	if err := h.service.DeleteMovie(ctx, req); err != nil {
+	if err := h.service.DeleteMovie(req); err != nil {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}

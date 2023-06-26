@@ -5,7 +5,6 @@
 package mock_service
 
 import (
-	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -178,30 +177,58 @@ func (m *MockListService) EXPECT() *MockListServiceMockRecorder {
 }
 
 // AddMovie mocks base method.
-func (m *MockListService) AddMovie(arg0 context.Context, arg1 *model.ListUnit) error {
+func (m *MockListService) AddMovie(arg0 *model.ListUnit) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddMovie", arg0, arg1)
+	ret := m.ctrl.Call(m, "AddMovie", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AddMovie indicates an expected call of AddMovie.
-func (mr *MockListServiceMockRecorder) AddMovie(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockListServiceMockRecorder) AddMovie(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMovie", reflect.TypeOf((*MockListService)(nil).AddMovie), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMovie", reflect.TypeOf((*MockListService)(nil).AddMovie), arg0)
+}
+
+// DeleteMovie mocks base method.
+func (m *MockListService) DeleteMovie(arg0 *model.ListUnit) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteMovie", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteMovie indicates an expected call of DeleteMovie.
+func (mr *MockListServiceMockRecorder) DeleteMovie(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMovie", reflect.TypeOf((*MockListService)(nil).DeleteMovie), arg0)
 }
 
 // GetMovies mocks base method.
-func (m *MockListService) GetMovies(arg0 context.Context, arg1 int64) ([]*model.ListUnit, error) {
+func (m *MockListService) GetMovies(arg0 int64) ([]*model.ListUnit, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMovies", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetMovies", arg0)
 	ret0, _ := ret[0].([]*model.ListUnit)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetMovies indicates an expected call of GetMovies.
-func (mr *MockListServiceMockRecorder) GetMovies(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockListServiceMockRecorder) GetMovies(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMovies", reflect.TypeOf((*MockListService)(nil).GetMovies), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMovies", reflect.TypeOf((*MockListService)(nil).GetMovies), arg0)
+}
+
+// UpdateMovie mocks base method.
+func (m *MockListService) UpdateMovie(arg0 *model.ListUnitPatch) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateMovie", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateMovie indicates an expected call of UpdateMovie.
+func (mr *MockListServiceMockRecorder) UpdateMovie(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMovie", reflect.TypeOf((*MockListService)(nil).UpdateMovie), arg0)
 }

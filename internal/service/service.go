@@ -1,8 +1,6 @@
 package service
 
 import (
-	"context"
-
 	"github.com/kiryu-dev/mykinolist/internal/config"
 	"github.com/kiryu-dev/mykinolist/internal/model"
 )
@@ -21,10 +19,10 @@ type AuthService interface {
 }
 
 type ListService interface {
-	AddMovie(context.Context, *model.ListUnit) error
-	GetMovies(context.Context, int64) ([]*model.ListUnit, error)
-	UpdateMovie(context.Context, *model.ListUnitPatch) error
-	DeleteMovie(context.Context, *model.ListUnit) error
+	AddMovie(*model.ListUnit) error
+	GetMovies(int64) ([]*model.ListUnit, error)
+	UpdateMovie(*model.ListUnitPatch) error
+	DeleteMovie(*model.ListUnit) error
 }
 
 type Service struct {

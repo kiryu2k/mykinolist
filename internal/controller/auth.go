@@ -3,10 +3,8 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/kiryu-dev/mykinolist/internal/model"
@@ -28,9 +26,7 @@ func (h *authHandler) signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-	startTime := time.Now()
 	list, err := h.service.SignUp(req)
-	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
@@ -45,9 +41,7 @@ func (h *authHandler) signIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-	startTime := time.Now()
 	tokens, err := h.service.SignIn(req)
-	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
@@ -89,9 +83,7 @@ func (h *authHandler) getUser(w http.ResponseWriter, r *http.Request) {
 		writeErrorJSON(w, http.StatusForbidden, "cannot get other's account info")
 		return
 	}
-	startTime := time.Now()
 	user, err := h.service.GetUser(id)
-	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
 		writeErrorJSON(w, http.StatusInternalServerError, err.Error())
 		return
@@ -111,9 +103,7 @@ func (h *authHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 		writeErrorJSON(w, http.StatusForbidden, "cannot delete someone else's account")
 		return
 	}
-	startTime := time.Now()
 	user, err := h.service.Delete(id)
-	log.Printf("elapsed time: %v", time.Since(startTime))
 	if err != nil {
 		writeErrorJSON(w, http.StatusBadRequest, err.Error())
 		return
