@@ -1,0 +1,408 @@
+basePath: /
+definitions:
+  controller.errorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  model.ListInfo:
+    properties:
+      list_id:
+        type: integer
+      user_id:
+        type: integer
+    type: object
+  model.ListUnit:
+    properties:
+      id:
+        type: integer
+      is_favorite:
+        type: boolean
+      name:
+        type: string
+      score:
+        type: integer
+      status:
+        type: string
+    type: object
+  model.SignInUserDTO:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  model.SignUpUserDTO:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  model.Tokens:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  model.User:
+    properties:
+      created_on:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      last_login:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: MyKinoList is an API that provides the ability to create accounts to
+    keep a list of movies you are watching, have watched, or may want to watch sometime
+    later, as well as to rate them and add them to your «favorites».\n\nThis API uses
+    JSONWebTokens to give access to authorized users. A third-party, unofficial Kinopoisk
+    API is used to retrieve information about movies.\n\nThe documentation uses an
+    access token for authorization, which only lasts 30 seconds.
+  title: MyKinoList API
+  version: "1.0"
+paths:
+  /auth/signin:
+    post:
+      consumes:
+      - application/json
+      description: Log in to an existing account, update access and refresh tokens
+      parameters:
+      - description: account info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/model.SignInUserDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Tokens'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+      summary: Sign in to account
+      tags:
+      - auth
+  /auth/signout:
+    post:
+      description: Sign out of account by deleting refresh token from cookies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+      summary: Sign out of account
+      tags:
+      - auth
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Create an account and an empty movie list, which is linked to the
+        account ID
+      parameters:
+      - description: account info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/model.SignUpUserDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ListInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+      summary: Sign up an account
+      tags:
+      - auth
+  /list:
+    get:
+      description: Get all movies from list
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ListUnit'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+      security:
+      - AccessToken: []
+      summary: Get movies
+      tags:
+      - list
+    post:
+      consumes:
+      - application/json
+      description: Use a third-party API to search for movie information by title
+        and, if successful, add the movie to the list. You can add the movie to your
+        favorites, rate it, and specify movie status (watching, plan to watch, etc.)
+      parameters:
+      - description: movie info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/model.ListUnit'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+      security:
+      - AccessToken: []
+      summary: Add movie to list
+      tags:
+      - list
+  /list/{id}:
+    delete:
+      description: Delete movie from list
+      parameters:
+      - description: Movie ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ListUnit'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+      security:
+      - AccessToken: []
+      summary: Delete movie
+      tags:
+      - list
+    patch:
+      description: Update part of the information about the added movie. For example,
+        you can add the movie to your favorites or change the rating of the movie.
+      parameters:
+      - description: Movie ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+      security:
+      - AccessToken: []
+      summary: Update movie info
+      tags:
+      - list
+  /user/{id}:
+    delete:
+      description: Delete user account
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+      security:
+      - AccessToken: []
+      summary: Delete account
+      tags:
+      - user
+    get:
+      description: 'Get user info: id, username, email, last login time, etc.'
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/controller.errorResponse'
+      security:
+      - AccessToken: []
+      summary: Get user info
+      tags:
+      - user
+securityDefinitions:
+  AccessToken:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

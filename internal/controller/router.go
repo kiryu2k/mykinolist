@@ -5,6 +5,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kiryu-dev/mykinolist/internal/service"
+
+	_ "github.com/kiryu-dev/mykinolist/docs"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func New(auth service.AuthService, list service.ListService) *mux.Router {
@@ -17,6 +20,7 @@ func New(auth service.AuthService, list service.ListService) *mux.Router {
 		userRouter  = router.PathPrefix("/user").Subrouter()
 		listRouter  = router.PathPrefix("/list").Subrouter()
 	)
+	router.PathPrefix("/documentation/").Handler(httpSwagger.WrapHandler)
 	{
 		authRouter.HandleFunc("/signup", authHandler.signUp).Methods(http.MethodPost)
 		authRouter.HandleFunc("/signin", authHandler.signIn).Methods(http.MethodPost)
