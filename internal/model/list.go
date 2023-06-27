@@ -44,6 +44,9 @@ type ListUnitPatch struct {
 }
 
 func (u *ListUnit) Validate() error {
+	if len(u.Name) == 0 {
+		return fmt.Errorf("empty movie name")
+	}
 	if u.Score > 10 {
 		return fmt.Errorf("score cannot be greater than 10")
 	}

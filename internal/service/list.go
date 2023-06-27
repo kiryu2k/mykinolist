@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -32,8 +31,8 @@ type MovieRepositroy interface {
 func (s *listService) AddMovie(movie *model.ListUnit) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if len(movie.Name) == 0 {
-		return fmt.Errorf("empty movie name")
+	if err := movie.Validate(); err != nil {
+		return err
 	}
 	searchResult, err := s.searcher.Search(ctx, movie.Name)
 	if err != nil {
