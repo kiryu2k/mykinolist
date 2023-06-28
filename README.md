@@ -11,7 +11,7 @@ The service runs in the Docker container, and there is also documentation in Swa
 ## Tech Stack
 1. Router: [gorilla/mux](https://github.com/gorilla/mux).
 2. DB and stuff: PostgreSQL, [migrate cli util](https://github.com/golang-migrate/migrate), [database/sql golang package](https://pkg.go.dev/database/sql) and [pq driver](https://github.com/lib/pq).
-3. Test: [golang test package](https://pkg.go.dev/testing) and [testify lib](https://github.com/stretchr/testify) for unit-testing, [gomock lib] for mocks.
+3. Test: [golang test package](https://pkg.go.dev/testing) and [testify lib](https://github.com/stretchr/testify) for unit-testing, [gomock lib](https://github.com/golang/mock) for mocks.
 4. Security: [bcrypt lib](https://pkg.go.dev/golang.org/x/crypto/bcrypt) for hashing passwords and [jwt lib](https://github.com/golang-jwt/jwt) to generate JSONWebTokens.
 5. Configuration: [viper lib](https://github.com/spf13/viper) and [gotenv](https://github.com/subosito/gotenv).
 
